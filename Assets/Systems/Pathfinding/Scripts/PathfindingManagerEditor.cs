@@ -1,5 +1,6 @@
 using System.IO;
 using SpaceStation.Utils;
+using Unity.VisualScripting.FullSerializer.Internal;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.UIElements;
@@ -13,6 +14,7 @@ namespace SpaceStation.Pathfinding
     public class PathfindingManagerEditor : Editor
     {
         private BoxBoundsHandle _gridSizeHandle;
+        private ObjectField _bakePosition;
         private GridCell[,] _grid;
 
         private void OnEnable()
@@ -44,19 +46,18 @@ namespace SpaceStation.Pathfinding
             var bakeEditorFoldout = new Foldout();
             bakeEditorFoldout.text = "Bake Editor";
 
-            var bakePosition = new ObjectField();
-            bakePosition.label = "Position";
-            bakePosition.objectType = typeof(Transform);
-            bakeEditorFoldout.Add(bakePosition);
+            _bakePosition = new ObjectField();
+            _bakePosition.objectType = typeof(Transform);
+            bakeEditorFoldout.Add(_bakePosition);
 
             var bakeButton = new Button();
-            bakeButton.text = "Bake!";
+            bakeButton.text = "Bake to position!";
             bakeButton.clickable.clicked += () =>
             {
-                var transform = (Transform)bakePosition.value;
+                var transform = (Transform)_bakePosition.value;
                 manager.BakeToPosition(transform.position);
             };
-            bakePosition.Add(bakeButton);
+            _bakePosition.Add(bakeButton);
  
             root.Add(gridCellSize);
             root.Add(gridBoundsCenter);
@@ -79,6 +80,7 @@ namespace SpaceStation.Pathfinding
 
             DrawBounds(matrix, manager);
             DrawGridPreview(manager);
+            DrawBakePositionHandler();
         }
 
         private void DrawBounds(Matrix4x4 p_matrix, PathfindingManager p_manager)
@@ -115,6 +117,30 @@ namespace SpaceStation.Pathfinding
 
                 Handles.color = Color.cyan;
                 Handles.DrawWireCube(position, size);
+            }
+        }
+
+        private void DrawBakePositionHandler()
+        {
+            if (_bakePosition == null || _bakePosition.value == null)
+            {
+                return;
+            }
+
+            var transform = (Transform)_bakePosition.value;
+
+            EditorGUI.BeginChangeCheck();
+
+            var pos = transform.position;
+            var rot = transform.rotation;
+            
+            Handles.TransformHandle(ref pos, ref rot);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                transform.position = pos;
+                transform.rotation = rot;
+                EditorUtility.SetDirty(transform);
             }
         }
 

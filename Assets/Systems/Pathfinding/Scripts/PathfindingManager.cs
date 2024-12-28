@@ -29,20 +29,50 @@ namespace SpaceStation.Pathfinding
 
         internal void BakeToPosition(Vector3 p_worldPosition)
         {
-            Debug.Log($"Baking to position {p_worldPosition}");
+            Debug.Log($"Baking to position {p_worldPosition} {IsPointInsideGrid(p_worldPosition)}");
+        }
+
+        private bool IsPointInsideGrid(Vector3 p_worldPosition)
+        {
+            var minCorner = GetMinCorner();
+            var maxCorner = GetMaxCorner();
+
+            return minCorner.x < p_worldPosition.x
+                   && maxCorner.x > p_worldPosition.x
+                   && minCorner.y < p_worldPosition.z
+                   && maxCorner.y > p_worldPosition.z;
+        }
+
+        private Vector2Int GetGridCellSize()
+        {
+            return new Vector2Int(
+                Mathf.FloorToInt(_gridBoundsSize.x / _gridCellSize),
+                Mathf.FloorToInt(_gridBoundsSize.y / _gridCellSize));
+        }
+
+        private Vector2 GetMinCorner()
+        {
+            return _gridBoundsCenter - _gridBoundsSize / 2f;
+        }
+
+        private Vector2 GetMaxCorner()
+        {
+            var size = GetGridCellSize();
+            var corner = GetMinCorner();
+
+            return corner + (Vector2)size * _gridCellSize;
         }
 
         internal GridCell[,] CreateGrid()
         {
-            var sizeX = Mathf.FloorToInt(_gridBoundsSize.x / _gridCellSize);
-            var sizeY = Mathf.FloorToInt(_gridBoundsSize.y / _gridCellSize);
+            var size = GetGridCellSize();
 
-            var minCorner = _gridBoundsCenter - _gridBoundsSize / 2f + new Vector2(_gridCellSize, _gridCellSize) / 2f;
-            var grid = new GridCell[sizeX, sizeY];
+            var minCorner = GetMinCorner() + new Vector2(_gridCellSize, _gridCellSize) / 2f;
+            var grid = new GridCell[size.x, size.y];
 
-            for (var y = 0; y < sizeY; y++)
+            for (var y = 0; y < size.y; y++)
             {
-                for (var x = 0; x < sizeX; x++)
+                for (var x = 0; x < size.x; x++)
                 {
                     grid[x, y] = new GridCell
                     {
