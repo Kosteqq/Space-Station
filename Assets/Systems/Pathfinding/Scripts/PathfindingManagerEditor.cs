@@ -15,7 +15,6 @@ namespace SpaceStation.Pathfinding
     {
         private BoxBoundsHandle _gridSizeHandle;
         private ObjectField _bakePosition;
-        private GridCell[,] _grid;
 
         private void OnEnable()
         {
@@ -28,20 +27,25 @@ namespace SpaceStation.Pathfinding
         {
             var manager = (PathfindingManager)target;
             
+            manager.RegenerateGrid();
+            
             var root = new VisualElement();
             root.Bind(new SerializedObject(manager));
 
             var gridCellSize = new FloatField();
             gridCellSize.label = "Grid Cell Size";
             gridCellSize.bindingPath = nameof(PathfindingManager._gridCellSize);
+            gridCellSize.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
 
             var gridBoundsCenter = new Vector2Field();
             gridBoundsCenter.label = "Grid Bounds Center";
             gridBoundsCenter.bindingPath = nameof(PathfindingManager._gridBoundsCenter);
+            gridBoundsCenter.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
             
             var gridBoundsSize = new Vector2Field();
             gridBoundsSize.label = "Grid Bounds Size";
             gridBoundsSize.bindingPath = nameof(PathfindingManager._gridBoundsSize);
+            gridBoundsSize.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
 
             var bakeEditorFoldout = new Foldout();
             bakeEditorFoldout.text = "Bake Editor";
@@ -74,7 +78,10 @@ namespace SpaceStation.Pathfinding
             var manager = (PathfindingManager)target;
             var matrix = Matrix4x4.TRS( Vector3.zero, Quaternion.identity, Vector3.one );
 
-            _grid ??= manager.CreateGrid();
+            if (manager.Grid == null)
+            {
+                manager.RegenerateGrid();
+            }
             
             Handles.zTest = CompareFunction.Always;
 
@@ -100,20 +107,28 @@ namespace SpaceStation.Pathfinding
                     p_manager._gridBoundsSize = _gridSizeHandle.size.XZ();
                     EditorUtility.SetDirty(p_manager);
                     
-                    _grid = p_manager.CreateGrid();
+                    p_manager.RegenerateGrid();
                 }
             }
         }
 
         private void DrawGridPreview(PathfindingManager p_manager)
         {
-            foreach (var cell in _grid)
+            foreach (var cell in p_manager.Grid)
             {
+                Handles.color = Color.white;
+                Handles.Label(new Vector3(cell.WorldPosition.x, 0.5f, cell.WorldPosition.y), cell.Weight.ToString());
+                
                 var position = new Vector3(cell.WorldPosition.x, 0f, cell.WorldPosition.y);
                 var size = new Vector3(p_manager._gridCellSize, 0f, p_manager._gridCellSize);
 
                 Handles.color = Color.red;
-                Handles.DrawLine(position, position + new Vector3(cell.Direction.x, 0f, cell.Direction.y) / 2f);
+                var directionNeighbour = p_manager.GetLowestWeightNeighbour(cell.GridPosition);
+                
+                if (directionNeighbour.HasValue)
+                {
+                    Handles.DrawLine(position, new Vector3(directionNeighbour.Value.WorldPosition.x, 0f, directionNeighbour.Value.WorldPosition.y));
+                }
 
                 Handles.color = Color.cyan;
                 Handles.DrawWireCube(position, size);
