@@ -10,7 +10,7 @@ namespace SpaceStation.Pathfinding
         internal float _gridCellSize = 1f;
 
         [SerializeField]
-        internal Vector2 _gridBoundsPosition = Vector2.zero;
+        internal Vector2 _gridBoundsCenter = Vector2.zero;
 
         [SerializeField]
         internal Vector2 _gridBoundsSize = Vector2.one;
@@ -27,9 +27,9 @@ namespace SpaceStation.Pathfinding
             
         }
 
-        private void Bake(GridCell p_target)
+        internal void BakeToPosition(Vector3 p_worldPosition)
         {
-            
+            Debug.Log($"Baking to position {p_worldPosition}");
         }
 
         internal GridCell[,] CreateGrid()
@@ -37,7 +37,7 @@ namespace SpaceStation.Pathfinding
             var sizeX = Mathf.FloorToInt(_gridBoundsSize.x / _gridCellSize);
             var sizeY = Mathf.FloorToInt(_gridBoundsSize.y / _gridCellSize);
 
-            var minCorner = _gridBoundsPosition - _gridBoundsSize / 2f + new Vector2(_gridCellSize, _gridCellSize) / 2f;
+            var minCorner = _gridBoundsCenter - _gridBoundsSize / 2f + new Vector2(_gridCellSize, _gridCellSize) / 2f;
             var grid = new GridCell[sizeX, sizeY];
 
             for (var y = 0; y < sizeY; y++)
