@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using SpaceStation.Utils;
 using Unity.VisualScripting.FullSerializer.Internal;
@@ -15,6 +16,8 @@ namespace SpaceStation.Pathfinding
     {
         private BoxBoundsHandle _gridSizeHandle;
         private ObjectField _bakePosition;
+        private ObjectField _pathFinderPosition;
+        private List<Vector2> _pathPoints;
 
         private void OnEnable()
         {
@@ -47,26 +50,40 @@ namespace SpaceStation.Pathfinding
             gridBoundsSize.bindingPath = nameof(PathfindingManager._gridBoundsSize);
             gridBoundsSize.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
 
-            var bakeEditorFoldout = new Foldout();
-            bakeEditorFoldout.text = "Bake Editor";
+            var editorFoldout = new Foldout();
+            editorFoldout.text = "Editor";
 
             _bakePosition = new ObjectField();
             _bakePosition.objectType = typeof(Transform);
-            bakeEditorFoldout.Add(_bakePosition);
+            editorFoldout.Add(_bakePosition);
 
             var bakeButton = new Button();
-            bakeButton.text = "Bake to position!";
+            bakeButton.text = "Bake To Position!";
             bakeButton.clickable.clicked += () =>
             {
                 var transform = (Transform)_bakePosition.value;
-                manager.BakeToPosition(transform.position);
+                manager.BakeToPosition(transform.position.XZ());
             };
             _bakePosition.Add(bakeButton);
+
+            _pathFinderPosition = new ObjectField();
+            _pathFinderPosition.objectType = typeof(Transform);
+            editorFoldout.Add(_pathFinderPosition);
+
+            var findButton = new Button();
+            findButton.text = "Find Path!";
+            findButton.clickable.clicked += () =>
+            {
+                var targetTransform = (Transform)_bakePosition.value;
+                var srcTransform = (Transform)_pathFinderPosition.value;
+                _pathPoints = manager.GetPathToPoint(srcTransform.position.XZ(), targetTransform.position.XZ());
+            };
+            _pathFinderPosition.Add(findButton);
  
             root.Add(gridCellSize);
             root.Add(gridBoundsCenter);
             root.Add(gridBoundsSize);
-            root.Add(bakeEditorFoldout);
+            root.Add(editorFoldout);
 
             return root;
         }
@@ -87,7 +104,9 @@ namespace SpaceStation.Pathfinding
 
             DrawBounds(matrix, manager);
             DrawGridPreview(manager);
-            DrawBakePositionHandler();
+            DrawEditorPositionHandler(_bakePosition);
+            DrawEditorPositionHandler(_pathFinderPosition);
+            DrawEditorPath();
         }
 
         private void DrawBounds(Matrix4x4 p_matrix, PathfindingManager p_manager)
@@ -135,20 +154,21 @@ namespace SpaceStation.Pathfinding
             }
         }
 
-        private void DrawBakePositionHandler()
+        private void DrawEditorPositionHandler(ObjectField p_transformField)
         {
-            if (_bakePosition == null || _bakePosition.value == null)
+            if (p_transformField == null || p_transformField.value == null)
             {
                 return;
             }
 
-            var transform = (Transform)_bakePosition.value;
+            var transform = (Transform)p_transformField.value;
 
             EditorGUI.BeginChangeCheck();
 
             var pos = transform.position;
             var rot = transform.rotation;
-            
+
+            Handles.Label(pos, transform.gameObject.name);
             Handles.TransformHandle(ref pos, ref rot);
 
             if (EditorGUI.EndChangeCheck())
@@ -156,6 +176,23 @@ namespace SpaceStation.Pathfinding
                 transform.position = pos;
                 transform.rotation = rot;
                 EditorUtility.SetDirty(transform);
+            }
+        }
+
+        private void DrawEditorPath()
+        {
+            if (_pathPoints == null)
+            {
+                return;
+            }
+            
+            Handles.color = Color.yellow;
+
+            for (var i = 0; i < _pathPoints.Count - 1; i++)
+            {
+                Handles.DrawLine(
+                    new Vector3(_pathPoints[i].x, 0f, _pathPoints[i].y),
+                    new Vector3(_pathPoints[i + 1].x, 0f, _pathPoints[i + 1].y));
             }
         }
 
