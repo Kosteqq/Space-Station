@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using SpaceStation.Pathfinding;
+using SpaceStation.PathFinding;
 using SpaceStation.Utils;
 using UnityEngine;
 
@@ -11,14 +11,14 @@ namespace SpaceStation.Characters
         public float Speed;
         public List<Vector2> PathPoints;
 
-        private PathfindingManager _manager;
+        private PathFindingManager _manager;
         private Vector3 _prevTargetPoint;
         private Vector2 _prevPoint;
         private Vector2 _destPoint;
 
         private void Start()
         {
-            _manager = FindAnyObjectByType<PathfindingManager>();
+            _manager = FindAnyObjectByType<PathFindingManager>();
         }
 
         private void OnDrawGizmos()

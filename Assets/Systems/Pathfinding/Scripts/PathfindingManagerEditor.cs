@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using System.IO;
 using SpaceStation.Utils;
-using Unity.VisualScripting.FullSerializer.Internal;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.UIElements;
@@ -9,9 +7,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 
-namespace SpaceStation.Pathfinding
+namespace SpaceStation.PathFinding
 {
-    [CustomEditor(typeof(PathfindingManager))]
+    [CustomEditor(typeof(PathFindingManager))]
     public class PathfindingManagerEditor : Editor
     {
         private BoxBoundsHandle _gridSizeHandle;
@@ -28,7 +26,7 @@ namespace SpaceStation.Pathfinding
         
         public override VisualElement CreateInspectorGUI()
         {
-            var manager = (PathfindingManager)target;
+            var manager = (PathFindingManager)target;
             
             manager.RegenerateGrid();
             
@@ -37,17 +35,17 @@ namespace SpaceStation.Pathfinding
 
             var gridCellSize = new FloatField();
             gridCellSize.label = "Grid Cell Size";
-            gridCellSize.bindingPath = nameof(PathfindingManager._gridCellSize);
+            gridCellSize.bindingPath = nameof(PathFindingManager._gridCellSize);
             gridCellSize.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
 
             var gridBoundsCenter = new Vector2Field();
             gridBoundsCenter.label = "Grid Bounds Center";
-            gridBoundsCenter.bindingPath = nameof(PathfindingManager._gridBoundsCenter);
+            gridBoundsCenter.bindingPath = nameof(PathFindingManager._gridBoundsCenter);
             gridBoundsCenter.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
             
             var gridBoundsSize = new Vector2Field();
             gridBoundsSize.label = "Grid Bounds Size";
-            gridBoundsSize.bindingPath = nameof(PathfindingManager._gridBoundsSize);
+            gridBoundsSize.bindingPath = nameof(PathFindingManager._gridBoundsSize);
             gridBoundsSize.RegisterValueChangedCallback(_ => manager.RegenerateGrid());
 
             var editorFoldout = new Foldout();
@@ -92,7 +90,7 @@ namespace SpaceStation.Pathfinding
 
         private void OnSceneGUI()
         {
-            var manager = (PathfindingManager)target;
+            var manager = (PathFindingManager)target;
             var matrix = Matrix4x4.TRS( Vector3.zero, Quaternion.identity, Vector3.one );
 
             if (manager.Grid == null)
@@ -109,7 +107,7 @@ namespace SpaceStation.Pathfinding
             DrawEditorPath();
         }
 
-        private void DrawBounds(Matrix4x4 p_matrix, PathfindingManager p_manager)
+        private void DrawBounds(Matrix4x4 p_matrix, PathFindingManager p_manager)
         {
             using (new Handles.DrawingScope(Color.blue, p_matrix))
             {
@@ -131,7 +129,7 @@ namespace SpaceStation.Pathfinding
             }
         }
 
-        private void DrawGridPreview(PathfindingManager p_manager)
+        private void DrawGridPreview(PathFindingManager p_manager)
         {
             foreach (var cell in p_manager.Grid)
             {
@@ -142,11 +140,12 @@ namespace SpaceStation.Pathfinding
                 var size = new Vector3(p_manager._gridCellSize, 0f, p_manager._gridCellSize);
 
                 Handles.color = Color.red;
-                var directionNeighbour = p_manager.GetLowestWeightNeighbour(cell.GridPosition);
+                var directionNeighbour = p_manager.TryGetLowestWeightNeighbour(cell.GridPosition);
                 
                 if (directionNeighbour.HasValue)
                 {
-                    Handles.DrawLine(position, new Vector3(directionNeighbour.Value.WorldPosition.x, 0f, directionNeighbour.Value.WorldPosition.y));
+                    ref var neighbourCell = ref p_manager.Grid[directionNeighbour.Value.x, directionNeighbour.Value.y];
+                    Handles.DrawLine(position, new Vector3(neighbourCell.WorldPosition.x, 0f, neighbourCell.WorldPosition.y));
                 }
 
                 Handles.color = Color.cyan;
