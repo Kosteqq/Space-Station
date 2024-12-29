@@ -13,9 +13,8 @@ namespace SpaceStation.PathFinding
     public class PathfindingManagerEditor : Editor
     {
         private BoxBoundsHandle _gridSizeHandle;
-        private ObjectField _bakePosition;
-        private ObjectField _pathFinderPosition;
-        private List<Vector2> _pathPoints;
+        private ObjectField _pathFindingTarget;
+        private ObjectField _pathFinderObject;
 
         private void OnEnable()
         {
@@ -51,32 +50,33 @@ namespace SpaceStation.PathFinding
             var editorFoldout = new Foldout();
             editorFoldout.text = "Editor";
 
-            _bakePosition = new ObjectField();
-            _bakePosition.objectType = typeof(Transform);
-            editorFoldout.Add(_bakePosition);
+            _pathFindingTarget = new ObjectField();
+            _pathFindingTarget.objectType = typeof(PathFindingTarget);
+            editorFoldout.Add(_pathFindingTarget);
 
             var bakeButton = new Button();
             bakeButton.text = "Bake To Position!";
             bakeButton.clickable.clicked += () =>
             {
-                var transform = (Transform)_bakePosition.value;
-                manager.BakeToPosition(transform.position.XZ());
+                manager.BakeToTaret((PathFindingTarget)_pathFindingTarget.value);
             };
-            _bakePosition.Add(bakeButton);
+            _pathFindingTarget.Add(bakeButton);
 
-            _pathFinderPosition = new ObjectField();
-            _pathFinderPosition.objectType = typeof(Transform);
-            editorFoldout.Add(_pathFinderPosition);
+            _pathFinderObject = new ObjectField();
+            _pathFinderObject.objectType = typeof(PathFindingObjectController);
+            editorFoldout.Add(_pathFinderObject);
 
             var findButton = new Button();
             findButton.text = "Find Path!";
             findButton.clickable.clicked += () =>
             {
-                var targetTransform = (Transform)_bakePosition.value;
-                var srcTransform = (Transform)_pathFinderPosition.value;
-                _pathPoints = manager.GetPathToPoint(srcTransform.position.XZ(), targetTransform.position.XZ());
+                manager.RegisterTarget((PathFindingTarget)_pathFindingTarget.value);
+                
+                var obj = (PathFindingObjectController)_pathFinderObject.value;
+                obj.Start();
+                obj.FindPath();
             };
-            _pathFinderPosition.Add(findButton);
+            _pathFinderObject.Add(findButton);
  
             root.Add(gridCellSize);
             root.Add(gridBoundsCenter);
@@ -102,9 +102,8 @@ namespace SpaceStation.PathFinding
 
             DrawBounds(matrix, manager);
             DrawGridPreview(manager);
-            DrawEditorPositionHandler(_bakePosition);
-            DrawEditorPositionHandler(_pathFinderPosition);
-            DrawEditorPath();
+            DrawEditorPositionHandler(_pathFindingTarget);
+            DrawEditorPositionHandler(_pathFinderObject);
         }
 
         private void DrawBounds(Matrix4x4 p_matrix, PathFindingManager p_manager)
@@ -160,7 +159,7 @@ namespace SpaceStation.PathFinding
                 return;
             }
 
-            var transform = (Transform)p_transformField.value;
+            var transform = ((MonoBehaviour)p_transformField.value).transform;
 
             EditorGUI.BeginChangeCheck();
 
@@ -175,23 +174,6 @@ namespace SpaceStation.PathFinding
                 transform.position = pos;
                 transform.rotation = rot;
                 EditorUtility.SetDirty(transform);
-            }
-        }
-
-        private void DrawEditorPath()
-        {
-            if (_pathPoints == null)
-            {
-                return;
-            }
-            
-            Handles.color = Color.yellow;
-
-            for (var i = 0; i < _pathPoints.Count - 1; i++)
-            {
-                Handles.DrawLine(
-                    new Vector3(_pathPoints[i].x, 0f, _pathPoints[i].y),
-                    new Vector3(_pathPoints[i + 1].x, 0f, _pathPoints[i + 1].y));
             }
         }
 

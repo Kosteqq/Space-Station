@@ -24,9 +24,6 @@ namespace SpaceStation.PathFinding
 
         [SerializeField]
         internal Vector2 _gridBoundsSize = Vector2.one;
-
-        [SerializeField]
-        private PathFindingLayer[] _layers;
         
         private GridCell[,] _grid;
         
@@ -34,24 +31,28 @@ namespace SpaceStation.PathFinding
         
         private void Start()
         {
-            RegenerateGrid();
+            if (_grid == null)
+            {
+                RegenerateGrid();
+            }
         }
 
-        internal int RegisterTarget(PathFindingTarget p_pathFindingTarget)
+        internal void RegisterTarget(PathFindingTarget p_target)
         {
-            return 0;
+            // HACKME: Waiting for code architecture to resolve dependency hell
+            if (_grid == null)
+            {
+                RegenerateGrid();
+            }
+            
+            BakeToTaret(p_target);
         }
 
-        public List<Vector2> GetPathToPoint(Vector2 p_srcPosition, Vector2 p_targetPosition)
+        public List<Vector2> GetPathToTarget(PathFindingObjectController p_object)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Pathfinding");
             
-            // HACKME: Move baking to register target func
-            BakeToPosition(p_targetPosition);
-
-            var srcCellPosition = GetCellFromWorldPosition(p_srcPosition);
-            var targetCellPosition = GetCellFromWorldPosition(p_targetPosition);
-            var targetCell = _grid[targetCellPosition.x, targetCellPosition.y];
+            var srcCellPosition = GetCellFromWorldPosition(p_object.transform.position.XZ());
 
             var path = new List<Vector2Int>();
             path.Add(srcCellPosition);
@@ -68,7 +69,8 @@ namespace SpaceStation.PathFinding
                 
                 path.Add(bestCell.Value);
 
-                if (bestCell == targetCell.GridPosition)
+                // Check is target
+                if (_grid[bestCell.Value.x, bestCell.Value.y].Weight == 0)
                 {
                     UnityEngine.Profiling.Profiler.EndSample();
                     return path.Select(pathCell => _grid[pathCell.x, pathCell.y].WorldPosition).ToList();
@@ -96,19 +98,19 @@ namespace SpaceStation.PathFinding
             }
         }
 
-        internal void BakeToPosition(Vector2 p_worldPosition)
+        internal void BakeToTaret(PathFindingTarget p_target)
         {
             UnityEngine.Profiling.Profiler.BeginSample("Baking grid");
-            if (!IsPointInsideGrid(p_worldPosition))
+            if (!IsPointInsideGrid(p_target.transform.position.XZ()))
             {
                 UnityEngine.Profiling.Profiler.EndSample();
-                Debug.LogError($"Position {p_worldPosition} is outside grid!");
+                Debug.LogError($"Position {p_target.transform.position} is outside grid!");
                 return;
             }
 
-            Debug.Log($"Baking to position {p_worldPosition} {IsPointInsideGrid(p_worldPosition)}");
+            Debug.Log($"Baking to position {p_target.transform.position}");
 
-            var cellPosition = GetCellFromWorldPosition(p_worldPosition);
+            var cellPosition = GetCellFromWorldPosition(p_target.transform.position.XZ());
 
             for (var y = 0; y < _grid.GetLength(1); y++)
             {

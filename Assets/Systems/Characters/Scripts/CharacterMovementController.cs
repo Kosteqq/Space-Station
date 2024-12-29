@@ -7,49 +7,36 @@ namespace SpaceStation.Characters
 {
     public class CharacterMovementController : MonoBehaviour
     {
-        public Transform TargetPoint;
+        private PathFindingManager _pathFindingManager;
+        private PathFindingObjectController _pathFindingController;
+        
+        public PathFindingTarget TargetPoint;
         public float Speed;
-        public List<Vector2> PathPoints;
 
-        private PathFindingManager _manager;
+        private List<Vector2> _pathPoints;
         private Vector3 _prevTargetPoint;
         private Vector2 _prevPoint;
         private Vector2 _destPoint;
 
         private void Start()
         {
-            _manager = FindAnyObjectByType<PathFindingManager>();
-        }
-
-        private void OnDrawGizmos()
-        {
-            Gizmos.color = Color.yellow;
-
-            for (var i = 0; i < PathPoints.Count - 1; i++)
-            {
-                Gizmos.DrawLine(
-                    new Vector3(PathPoints[i].x, transform.position.y, PathPoints[i].y),
-                    new Vector3(PathPoints[i + 1].x, transform.position.y, PathPoints[i + 1].y));
-            }
-
-            if (Application.isPlaying)
-            {
-                Gizmos.color = Color.cyan;
-                Gizmos.DrawLine(transform.position, new Vector3(_destPoint.x, transform.position.y, _destPoint.y));
-            }
+            _pathFindingManager = FindAnyObjectByType<PathFindingManager>();
+            _pathFindingController = GetComponent<PathFindingObjectController>();
         }
 
         private void Update()
         {
-            if (_prevTargetPoint != TargetPoint.transform.position && _manager != null)
+            if (_prevTargetPoint != TargetPoint.transform.position && _pathFindingManager != null)
             {
                 _prevTargetPoint = TargetPoint.transform.position;
-                PathPoints = _manager.GetPathToPoint(transform.position.XZ(), TargetPoint.transform.position.XZ());
-                _prevPoint = PathPoints[0];
-                _destPoint = PathPoints[0];
+                _pathFindingManager.BakeToTaret(TargetPoint);
+                _pathFindingController.FindPath();
+                _pathPoints = new List<Vector2>(_pathFindingController.Path);
+                _prevPoint = _pathPoints[0];
+                _destPoint = _pathPoints[0];
             }
             
-            if (PathPoints.IsEmpty())
+            if (_pathPoints.IsEmpty())
             {
                 return;
             }
@@ -74,14 +61,14 @@ namespace SpaceStation.Characters
 
         private Vector2 GetNextDestPoint()
         {
-            if (PathPoints.IsEmpty()
-                || PathPoints.IsLast(_prevPoint))
+            if (_pathPoints.IsEmpty()
+                || _pathPoints.IsLast(_prevPoint))
             {
                 return transform.position.XZ();
             }
 
-            var prevPointIndex = PathPoints.IndexOf(_prevPoint);
-            return PathPoints[prevPointIndex + 1];
+            var prevPointIndex = _pathPoints.IndexOf(_prevPoint);
+            return _pathPoints[prevPointIndex + 1];
         }
     }
 }
