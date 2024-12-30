@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SpaceStation.Core;
 using SpaceStation.Utils;
 using UnityEngine;
 
 namespace SpaceStation.PathFinding
 {
-    public class PathFindingManager : MonoBehaviour
+    public class PathFindingManager : GameplaySystemManager
     {
         internal struct GridCell
         {
@@ -36,6 +37,9 @@ namespace SpaceStation.PathFinding
                 RegenerateGrid();
             }
         }
+
+        public override void Initialize()
+        { }
 
         internal void RegisterTarget(PathFindingTarget p_target)
         {

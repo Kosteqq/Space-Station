@@ -1,13 +1,14 @@
-using UnityEngine;
+using SpaceStation.Core;
 
 namespace SpaceStation.PathFinding
 {
-    public class PathFindingTarget : MonoBehaviour
+    public class PathFindingTarget : SystemSubcontroller<PathFindingManager>
     {
-        private void Start()
+        public override void InitializeGame()
         {
-            var manager = FindAnyObjectByType<PathFindingManager>();
-            manager.RegisterTarget(this);
+            base.InitializeGame();
+            
+            SystemManager.RegisterTarget(this);
         }
     }
 }

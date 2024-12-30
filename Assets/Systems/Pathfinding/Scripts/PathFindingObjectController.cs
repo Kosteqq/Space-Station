@@ -1,24 +1,19 @@
 using System.Collections.Generic;
+using SpaceStation.Core;
 using SpaceStation.Utils;
 using UnityEngine;
 
 namespace SpaceStation.PathFinding
 {
-    public class PathFindingObjectController : MonoBehaviour
+    public class PathFindingObjectController : SystemSubcontroller<PathFindingManager>
     {
-        private PathFindingManager _manager;
         private List<Vector2> _path;
 
         public List<Vector2> Path => _path;
-        
-        internal void Start()
-        {
-            _manager = FindAnyObjectByType<PathFindingManager>();
-        }
 
         public void FindPath()
         {
-            _path = _manager.GetPathToTarget(this);
+            _path = SystemManager.GetPathToTarget(this);
         }
 
         private void OnDrawGizmos()

@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using SpaceStation.Core;
 using SpaceStation.PathFinding;
 using SpaceStation.Utils;
 using UnityEngine;
 
 namespace SpaceStation.Characters
 {
-    public class CharacterMovementController : MonoBehaviour
+    public class CharacterMovementController : GameplayController
     {
         private PathFindingManager _pathFindingManager;
         private PathFindingObjectController _pathFindingController;
@@ -18,7 +19,7 @@ namespace SpaceStation.Characters
         private Vector2 _prevPoint;
         private Vector2 _destPoint;
 
-        private void Start()
+        public override void StartGame()
         {
             _pathFindingManager = FindAnyObjectByType<PathFindingManager>();
             _pathFindingController = GetComponent<PathFindingObjectController>();
