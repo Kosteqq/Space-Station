@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace SpaceStation.Core
 {
-    public class GameplayManager : MonoBehaviour
+    public class GameManager : MonoBehaviour
     {
-        private GameplaySystemManager[] _systemManagers;
+        private GameSystemManager[] _systemManagers;
         private bool _initializedSystems;
         private bool _gameStart;
         
@@ -14,7 +14,7 @@ namespace SpaceStation.Core
         {
             InitializeSystems();
             
-            var gameplayControllers = FindObjectsByType<GameplayController>(FindObjectsSortMode.None);
+            var gameplayControllers = FindObjectsByType<GameController>(FindObjectsSortMode.None);
             
             InitializeControllers(gameplayControllers);
             StartControllers(gameplayControllers);
@@ -23,7 +23,7 @@ namespace SpaceStation.Core
         }
 
         public TSystem GetSystem<TSystem>()
-            where TSystem : GameplaySystemManager
+            where TSystem : GameSystemManager
         {
             return _systemManagers.First(system => system is TSystem) as TSystem;
         }
@@ -32,7 +32,7 @@ namespace SpaceStation.Core
         {
             var instance = Instantiate(p_prefab);
 
-            var controllers = instance.GetComponentsInChildren<GameplayController>();
+            var controllers = instance.GetComponentsInChildren<GameController>();
 
             if (_initializedSystems)
             {
@@ -49,7 +49,7 @@ namespace SpaceStation.Core
 
         private void InitializeSystems()
         {
-            _systemManagers = FindObjectsByType<GameplaySystemManager>(FindObjectsSortMode.None);
+            _systemManagers = FindObjectsByType<GameSystemManager>(FindObjectsSortMode.None);
 
             foreach (var manager in _systemManagers)
             {
@@ -59,7 +59,7 @@ namespace SpaceStation.Core
             _initializedSystems = true;
         }
 
-        private void InitializeControllers(GameplayController[] p_controllers)
+        private void InitializeControllers(GameController[] p_controllers)
         {
             foreach (var controller in p_controllers)
             {
@@ -68,7 +68,7 @@ namespace SpaceStation.Core
             }
         }
 
-        private void StartControllers(GameplayController[] p_controllers)
+        private void StartControllers(GameController[] p_controllers)
         {
             foreach (var controller in p_controllers)
             {
@@ -76,10 +76,10 @@ namespace SpaceStation.Core
             }
         }
 
-        private void SetupControllerManager(GameplayController p_controllers)
+        private void SetupControllerManager(GameController p_controllers)
         {
-            var type = typeof(GameplayController);
-            var property = type.GetProperty(nameof(GameplayController.GameplayManager), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var type = typeof(GameController);
+            var property = type.GetProperty(nameof(GameController.GameManager), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             property.SetValue(p_controllers, this);
         }
     }

@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace SpaceStation.Core
 {
-    public abstract class GameplayController : MonoBehaviour
+    public abstract class GameController : MonoBehaviour
     {
-        public GameplayManager GameplayManager { get; private set; }
+        public GameManager GameManager { get; private set; }
         
         public virtual void InitializeGame()
         { }

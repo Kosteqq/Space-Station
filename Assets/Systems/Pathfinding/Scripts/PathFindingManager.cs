@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace SpaceStation.PathFinding
 {
-    public class PathFindingManager : GameplaySystemManager
+    public class PathFindingManager : GameSystemManager
     {
         internal struct GridCell
         {

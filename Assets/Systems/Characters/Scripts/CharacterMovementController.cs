@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace SpaceStation.Characters
 {
-    public class CharacterMovementController : GameplayController
+    public class CharacterMovementController : GameController
     {
         private PathFindingManager _pathFindingManager;
         private PathFindingObjectController _pathFindingController;

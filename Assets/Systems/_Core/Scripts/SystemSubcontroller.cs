@@ -1,7 +1,7 @@
 namespace SpaceStation.Core
 {
-    public abstract class SystemSubcontroller<TSystem> : GameplayController
-        where TSystem : GameplaySystemManager
+    public abstract class SystemSubcontroller<TSystem> : GameController
+        where TSystem : GameSystemManager
     {
         protected TSystem SystemManager { get; private set; }
 
@@ -9,7 +9,7 @@ namespace SpaceStation.Core
         {
             base.InitializeGame();
 
-            SystemManager = GameplayManager.GetSystem<TSystem>();
+            SystemManager = GameManager.GetSystem<TSystem>();
         }
     }
 }
