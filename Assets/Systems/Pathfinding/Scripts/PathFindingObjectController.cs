@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace SpaceStation.PathFinding
 {
-    public class PathFindingObjectController : SystemSubcontroller<PathFindingManager>
+    public class PathFindingObjectController : SystemController<PathFindingManager>
     {
         private List<Vector2> _path;
 

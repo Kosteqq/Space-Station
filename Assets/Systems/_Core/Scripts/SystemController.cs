@@ -1,6 +1,6 @@
 namespace SpaceStation.Core
 {
-    public abstract class SystemSubcontroller<TSystem> : GameController
+    public abstract class SystemController<TSystem> : GameController
         where TSystem : GameSystemManager
     {
         protected TSystem SystemManager { get; private set; }

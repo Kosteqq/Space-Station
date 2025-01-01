@@ -2,7 +2,7 @@ using SpaceStation.Core;
 
 namespace SpaceStation.PathFinding
 {
-    public class PathFindingTarget : SystemSubcontroller<PathFindingManager>
+    public class PathFindingTarget : SystemController<PathFindingManager>
     {
         public override void InitializeGame()
         {
