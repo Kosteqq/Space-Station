@@ -19,7 +19,11 @@ namespace SpaceStation.Core
                 return Status.Success;
             }
 
-            Debug.Log(typeof(TController).Name);
+            if (Target.Value == null)
+            {
+                LogFailure($"Failed to cache {typeof(TController).Name}, the \"Target\" var is null!", true);
+                return Status.Failure;
+            }
 
             if (Target.Value.TryGetComponent<TController>(out var controller))
             {

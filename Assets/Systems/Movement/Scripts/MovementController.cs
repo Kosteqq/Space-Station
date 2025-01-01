@@ -1,43 +1,45 @@
 using System.Collections.Generic;
 using SpaceStation.Core;
-using SpaceStation.PathFinding;
 using SpaceStation.Utils;
 using UnityEngine;
 
-namespace SpaceStation.Characters
+namespace SpaceStation.Movement
 {
-    public class CharacterMovementController : GameController
+    public class MovementController : GameController
     {
-        private PathFindingManager _pathFindingManager;
-        private PathFindingObjectController _pathFindingController;
-        
-        public PathFindingTarget TargetPoint;
         public float Speed;
+        
+        public bool Success { get; private set; }
 
         private List<Vector2> _pathPoints;
         private Vector3 _prevTargetPoint;
         private Vector2 _prevPoint;
         private Vector2 _destPoint;
 
+        public override void InitializeGame()
+        {
+            base.InitializeGame();
+        }
+
         public override void StartGame()
         {
-            _pathFindingManager = FindAnyObjectByType<PathFindingManager>();
-            _pathFindingController = GetComponent<PathFindingObjectController>();
+            base.StartGame();
+            
+            Success = false;
+            _pathPoints = new List<Vector2>();
+        }
+
+        public void FollowPath(List<Vector2> p_points)
+        {
+            _pathPoints = p_points;
+            _prevPoint = _pathPoints[0];
+            _destPoint = _pathPoints[0];
+            Success = false;
         }
 
         private void Update()
         {
-            if (_prevTargetPoint != TargetPoint.transform.position && _pathFindingManager != null)
-            {
-                _prevTargetPoint = TargetPoint.transform.position;
-                _pathFindingManager.BakeToTaret(TargetPoint);
-                _pathFindingController.FindPath();
-                _pathPoints = new List<Vector2>(_pathFindingController.Path);
-                _prevPoint = _pathPoints[0];
-                _destPoint = _pathPoints[0];
-            }
-            
-            if (_pathPoints.IsEmpty())
+            if (_pathPoints.IsEmpty() || Success)
             {
                 return;
             }
@@ -51,10 +53,16 @@ namespace SpaceStation.Characters
             var delta = _destPoint - transform.position.XZ();
             var distance = delta.magnitude;
 
+            if (distance == 0)
+            {
+                Success = true;
+                return;
+            }
+
             var speed = Speed * Time.deltaTime;
             speed = Mathf.Min(speed, distance);
 
-            Debug.Log(speed);
+            // Debug.Log(speed);
 
             delta = delta.normalized;
             transform.position += new Vector3(delta.x, 0f, delta.y) * speed;
