@@ -5,11 +5,13 @@ using Action = System.Action;
 namespace SpaceStation.AI
 {
     [CreateAssetMenu(menuName = "Create Task", fileName = "Task", order = 0)]
-    public class Task : ScriptableObject
+    public abstract class Task : ScriptableObject
     {
         [SerializeField]
         private BehaviorGraph _behaviorGraph;
-        
+
+
+        public abstract TaskType Type { get; }
         public BehaviorGraph BehaviorGraph { get; private set; }
 
         public event Action OnReleased;
@@ -18,7 +20,7 @@ namespace SpaceStation.AI
         {
             if (Application.isPlaying)
             {
-                BehaviorGraph = Instantiate(_behaviorGraph);
+                // BehaviorGraph = Instantiate(_behaviorGraph);
             }
         }
 

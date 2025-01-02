@@ -1,5 +1,6 @@
 using SpaceStation.PathFinding;
 using System;
+using SpaceStation.Movement;
 using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
@@ -15,9 +16,11 @@ namespace SpaceStation.Gameplay.Character
         id: "b3b0b1d25c70105216ef7babd957eeb7")]
     public partial class MoveCharacterToTargetAction : Action
     {
-        [SerializeReference] public BlackboardVariable<CharacterController> CharacterController;
+        [SerializeReference] public BlackboardVariable<GameplayCharacterController> CharacterController;
         [SerializeReference] public BlackboardVariable<PathFindingTarget> Target;
 
+        private MovementTask _task;
+        
         protected override Status OnStart()
         {
             if (CharacterController.Value == null)
@@ -32,13 +35,29 @@ namespace SpaceStation.Gameplay.Character
                 return Status.Failure;
             }
             
-            CharacterController.Value.MoveTo(Target.Value);
-            return Status.Running;
+            _task = CharacterController.Value.MoveTo(Target.Value);
+            
+            return GetStatusFromTask(_task);
         }
 
         protected override Status OnUpdate()
         {
-            return Status.Running;
+            return GetStatusFromTask(_task);
+        }
+
+        private static Status GetStatusFromTask(MovementTask p_task)
+        {
+            switch (p_task.CurrentStatus.Value)
+            {
+                case MovementTask.Status.Running:
+                    return Status.Running;
+                case MovementTask.Status.Success:
+                    return Status.Success;
+                case MovementTask.Status.Undefined:
+                case MovementTask.Status.Failure:
+                default:
+                    return Status.Failure;
+            }
         }
     }
 }

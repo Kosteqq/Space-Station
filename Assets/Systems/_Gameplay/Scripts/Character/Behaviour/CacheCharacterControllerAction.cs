@@ -11,7 +11,7 @@ namespace SpaceStation.Gameplay.Character
         story: "Cache [target] [controller]",
         category: "Action",
         id: "9884dd2fbd5f23971f6b37d42f3a0f04")]
-    public sealed partial class CacheCharacterControllerAction : CacheControllerAction<CharacterController>
+    public sealed partial class CacheCharacterControllerAction : CacheControllerAction<GameplayCharacterController>
     {
     }
 }
