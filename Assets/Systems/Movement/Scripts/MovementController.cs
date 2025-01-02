@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SpaceStation.Core;
 using SpaceStation.Utils;
@@ -5,79 +6,145 @@ using UnityEngine;
 
 namespace SpaceStation.Movement
 {
-    public class MovementController : GameController
+    public class MovementTask
     {
-        public float Speed;
-        
-        public bool Success { get; private set; }
-
-        private List<Vector2> _pathPoints;
-        private Vector3 _prevTargetPoint;
-        private Vector2 _prevPoint;
-        private Vector2 _destPoint;
-
-        public override void InitializeGame()
+        public enum Status
         {
-            base.InitializeGame();
+            Undefined,
+            Running,
+            Success,
+            Failure,
         }
+
+        public readonly ObservableProperty<Status> CurrentStatus = new(Status.Undefined);
+    }
+
+    public class MovementController : SystemController<MovementManager>
+    {
+        private float _currentSpeed;
+        
+        private MovementTask _currentTask;
+        private Queue<Vector2> _path;
+        private float _stopDistance;
+
+        private Vector2? _targetPoint;
 
         public override void StartGame()
         {
             base.StartGame();
             
-            Success = false;
-            _pathPoints = new List<Vector2>();
+            _currentSpeed = SystemManager.DefaultSpeed;
         }
 
-        public void FollowPath(List<Vector2> p_points)
+        public MovementTask FollowPath(Vector2 p_target, IReadOnlyCollection<Vector2> p_path)
         {
-            _pathPoints = p_points;
-            _prevPoint = _pathPoints[0];
-            _destPoint = _pathPoints[0];
-            Success = false;
+            return FollowPath(
+                p_target,
+                p_path,
+                SystemManager.DefaultStopDistance);
+        }
+        
+        public MovementTask FollowPath(Vector2 p_target, IReadOnlyCollection<Vector2> p_path, float p_stopDistance)
+        {
+            _path = new Queue<Vector2>(p_path);
+            _stopDistance = p_stopDistance;
+            
+            _currentTask = new MovementTask();
+            _currentTask.CurrentStatus.Value = MovementTask.Status.Running;
+
+            if (_path == null || _path.IsEmpty())
+            {
+                Debug.LogError("The path is null or empty!");
+                _currentTask.CurrentStatus.Value = MovementTask.Status.Failure;
+            }
+
+            return _currentTask;
         }
 
         private void Update()
         {
-            if (_pathPoints.IsEmpty() || Success)
+            if (!IsMovementFollowPath())
             {
+                return;
+            }
+
+            if (!_targetPoint.HasValue)
+            {
+                if (!TryAcequireNextPoint())
+                {
+                    _currentTask.CurrentStatus.Value = MovementTask.Status.Success;
+                    _currentTask = null;
+                    return;
+                }
+            }
+
+            MoveToTargetPoint();
+        }
+
+        private bool IsMovementFollowPath()
+        {
+            return _currentTask != null && _currentTask.CurrentStatus.Value == MovementTask.Status.Running;
+        }
+        
+        private bool TryAcequireNextPoint()
+        {
+             var success = _path.TryDequeue(out var point);
+             _targetPoint = success ? point : null;
+
+             return success;
+        }
+
+        private void MoveToTargetPoint()
+        {
+            var positionDelta = _targetPoint.Value - transform.position.XZ();
+            var distanceToPoint = positionDelta.magnitude;
+            var reachedPoint = distanceToPoint < _stopDistance;
+
+            if (reachedPoint)
+            {
+                _targetPoint = null;
                 return;
             }
             
-            if (transform.position.XZ() == _destPoint)
-            {
-                _prevPoint = _destPoint;
-                _destPoint = GetNextDestPoint();
-            }
+            var movement = CalculateMoveDistance(positionDelta);
+            transform.position += new Vector3(movement.x, 0f, movement.y);
+        }
+        
+        private Vector2 CalculateMoveDistance(Vector2 p_positionDelta)
+        {
+            var distance = p_positionDelta.magnitude;
+            var direction = p_positionDelta.normalized;
+            
+            var moveDistance = Mathf.Min(_currentSpeed * Time.deltaTime, distance);
+                
+            return direction * moveDistance;
+        }
 
-            var delta = _destPoint - transform.position.XZ();
-            var distance = delta.magnitude;
-
-            if (distance == 0)
+        private void OnDrawGizmosSelected()
+        {
+            if (!IsMovementFollowPath())
             {
-                Success = true;
                 return;
             }
 
-            var speed = Speed * Time.deltaTime;
-            speed = Mathf.Min(speed, distance);
-
-            // Debug.Log(speed);
-
-            delta = delta.normalized;
-            transform.position += new Vector3(delta.x, 0f, delta.y) * speed;
-        }
-
-        private Vector2 GetNextDestPoint()
-        {
-            if (_pathPoints.IsEmpty()
-                || _pathPoints.IsLast(_prevPoint))
+            Gizmos.color = Color.yellow;
+            
+            if (_targetPoint.HasValue)
             {
-                return transform.position.XZ();
+                Gizmos.DrawLine(transform.position, _targetPoint.Value.AsXZ(transform.position.y));
             }
 
-            var prevPointIndex = _pathPoints.IndexOf(_prevPoint);
-            return _pathPoints[prevPointIndex + 1];
+            var prevPoint = _targetPoint;
+            
+            foreach (var point in _path)
+            {
+                if (prevPoint.HasValue)
+                {
+                    Gizmos.DrawLine(prevPoint.Value.AsXZ(transform.position.y), point.AsXZ(transform.position.y));
+                }
+
+                prevPoint = point;
+            }
         }
     }
 }
