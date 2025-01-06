@@ -73,7 +73,7 @@ namespace SpaceStation.PathFinding
                 manager.RegisterTarget((PathFindingTarget)_pathFindingTarget.value);
                 
                 var obj = (PathFindingObjectController)_pathFinderObject.value;
-                obj.Start();
+                // obj.Start();
                 obj.FindPath();
             };
             _pathFinderObject.Add(findButton);
