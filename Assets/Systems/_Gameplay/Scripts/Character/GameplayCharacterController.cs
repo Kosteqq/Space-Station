@@ -1,5 +1,6 @@
 using SpaceStation.AI;
 using SpaceStation.Core;
+using SpaceStation.EnviroAsset;
 using SpaceStation.Movement;
 using SpaceStation.PathFinding;
 using SpaceStation.Utils;
@@ -10,11 +11,13 @@ namespace SpaceStation.Gameplay.Character
     [RequireComponent(typeof(MovementController))]
     [RequireComponent(typeof(PathFindingObjectController))]
     [RequireComponent(typeof(TaskController))]
+    [RequireComponent(typeof(EnviroAssetUserController))]
     public class GameplayCharacterController : SystemController<GameplayCharactersManager>
     {
         private MovementController _movementController;
         private PathFindingObjectController _pathFindingObjectController;
         private TaskController _taskController;
+        private EnviroAssetUserController _enviroAssetUserController;
 
         private PathFindingManager _pathFindingManager; // TEMP
 
@@ -25,6 +28,7 @@ namespace SpaceStation.Gameplay.Character
             _movementController = GetComponent<MovementController>();
             _pathFindingObjectController = GetComponent<PathFindingObjectController>();
             _taskController = GetComponent<TaskController>();
+            _enviroAssetUserController = GetComponent<EnviroAssetUserController>();
             
             _pathFindingManager = GameManager.GetSystem<PathFindingManager>();
             
