@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -25,7 +26,12 @@ namespace SpaceStation.Core
         public TSystem GetSystem<TSystem>()
             where TSystem : GameSystemManager
         {
-            return _systemManagers.First(system => system is TSystem) as TSystem;
+            var system =  _systemManagers.FirstOrDefault(system => system is TSystem);
+
+            if (system == null)
+                throw new Exception($"Trying to get \"{typeof(TSystem).Name}\" that doesnt exist!");
+
+            return (TSystem)system;
         }
 
         public GameObject InstantiatePrefab(GameObject p_prefab)
