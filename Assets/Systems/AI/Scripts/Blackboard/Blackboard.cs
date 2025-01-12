@@ -93,5 +93,12 @@ namespace SpaceStation.AI.Goap
 
             return value;
         }
+
+        // Set On/Off
+        // Add Monitor
+        //   Monitor - OnEventCheck
+        //   Monitor - Set On/Off
+        //   Several monitors/single monitor??
+        //   Override Monitor
     }
 }
