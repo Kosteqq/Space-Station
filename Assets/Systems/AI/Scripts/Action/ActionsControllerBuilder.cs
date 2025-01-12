@@ -36,13 +36,18 @@ namespace SpaceStation.AI.Goap
 
         internal class Builder : IInitialBuilder, IPreconditionsBuilder, IEffectsBuilder, IRunBuilder, IBuildBuilder
         {
-            private readonly AiManager _aiManager;
+            private readonly BlackboardStateFactory _stateFactory;
             private readonly List<BlackboardStateValue> _preconditions = new(32);
             private readonly List<BlackboardStateValue> _effects = new(32);
             private string _name;
             private Action.RunDelegate _runDelegate;
 
             public event Action<Action> OnBuild;
+
+            public Builder(BlackboardStateFactory p_stateFactory)
+            {
+                _stateFactory = p_stateFactory;
+            }
 
             public IPreconditionsBuilder WithName(string p_name)
             {
@@ -52,7 +57,7 @@ namespace SpaceStation.AI.Goap
             
             public IPreconditionsBuilder WithPrecondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
             {
-                var definition = _aiManager.StateFactory.Get(p_stateDefinition.GetType());
+                var definition = _stateFactory.Get(p_stateDefinition.GetType());
                 _preconditions.Add(new BlackboardStateValue(definition, p_value));
                 
                 return this;
@@ -60,7 +65,7 @@ namespace SpaceStation.AI.Goap
 
             public IPreconditionsBuilder WithPrecondition<T>(bool p_value) where T : BlackboardStateDefinition
             {
-                var definition = _aiManager.StateFactory.Get<T>();
+                var definition = _stateFactory.Get<T>();
                 _preconditions.Add(new BlackboardStateValue(definition, p_value));
                 
                 return this;
@@ -68,7 +73,7 @@ namespace SpaceStation.AI.Goap
 
             public IEffectsBuilder WithEffect(BlackboardStateDefinition p_stateDefinition, bool p_value)
             {
-                var definition = _aiManager.StateFactory.Get(p_stateDefinition.GetType());
+                var definition = _stateFactory.Get(p_stateDefinition.GetType());
                 _effects.Add(new BlackboardStateValue(definition, p_value));
                 
                 return this;
@@ -76,7 +81,7 @@ namespace SpaceStation.AI.Goap
 
             public IEffectsBuilder WithEffect<T>(bool p_value) where T : BlackboardStateDefinition
             {
-                var definition = _aiManager.StateFactory.Get<T>();
+                var definition = _stateFactory.Get<T>();
                 _effects.Add(new BlackboardStateValue(definition, p_value));
                 
                 return this;

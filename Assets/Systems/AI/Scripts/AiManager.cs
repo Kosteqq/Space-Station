@@ -13,7 +13,7 @@ namespace SpaceStation.AI.Goap
         public override void Initialize()
         {
             _stateFactory = new BlackboardStateFactory();
-            _actionsController = new ActionsController();
+            _actionsController = new ActionsController(_stateFactory);
             _goalsController = new GoalsController(_stateFactory);
         }
 
