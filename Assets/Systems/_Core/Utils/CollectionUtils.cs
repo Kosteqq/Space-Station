@@ -6,11 +6,11 @@ namespace SpaceStation.Utils
 {
     public static class CollectionUtils
     {
-        public static bool IsEmpty(this ICollection p_collection)
+        public static bool IsEmpty<T>(this IReadOnlyCollection<T> p_collection)
         {
             return p_collection.Count == 0;
         }
-        
+
         public static bool IsLast<T>(this ICollection<T> p_collection, T p_element)
         {
             return p_collection.Last().Equals(p_element);
