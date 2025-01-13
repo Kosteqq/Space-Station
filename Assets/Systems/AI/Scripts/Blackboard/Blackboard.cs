@@ -10,6 +10,7 @@ namespace SpaceStation.AI.Goap
         bool Get(Type p_stateType);
         bool Get(BlackboardStateDefinition p_definition);
         IReadOnlyDictionary<BlackboardStateDefinition, bool> GetAll();
+        bool CheckValue(BlackboardStateValue p_stateValue);
     }
     
     public class Blackboard : IBlackboardRO
@@ -32,6 +33,14 @@ namespace SpaceStation.AI.Goap
             }
 
             return clone;
+        }
+
+        public void Overwrite(Blackboard p_other)
+        {
+            foreach (var state in p_other._states)
+            {
+                _states[state.Key] = state.Value;
+            }
         }
 
         public void Set<T>(bool p_value)
@@ -68,6 +77,11 @@ namespace SpaceStation.AI.Goap
         public IReadOnlyDictionary<BlackboardStateDefinition, bool> GetAll()
         {
             return _states;
+        }
+
+        public bool CheckValue(BlackboardStateValue p_stateValue)
+        {
+            return Get(p_stateValue.Definition) == p_stateValue.Value;
         }
 
         private void InternalSet(Type p_stateType, bool p_value)

@@ -19,5 +19,12 @@ namespace SpaceStation.AI.Goap
             Definition = p_definition;
             Value = p_value;
         }
+
+        public override bool Equals(object p_other)
+        {
+            return p_other is BlackboardStateValue stateValue 
+                   && stateValue.Definition == Definition 
+                   && stateValue.Value == Value;
+        }
     }
 }
