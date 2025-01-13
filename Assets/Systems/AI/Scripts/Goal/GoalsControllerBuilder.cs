@@ -14,31 +14,31 @@ namespace SpaceStation.AI.Goap
         {
             IBuildBuilder WithPriority(float p_priority);
         }
-        
-        public interface IEffectsBuilder : IPriorityBuilder
+
+        public interface ISatisfyConditionsBuilder : IPriorityBuilder
         {
-            IEffectsBuilder WithEffect(BlackboardStateDefinition p_stateDefinition, bool p_value);
-            IEffectsBuilder WithEffect<T>(bool p_value)
+            ISatisfyConditionsBuilder WithSatisfyCondition(BlackboardStateDefinition p_stateDefinition, bool p_value);
+            ISatisfyConditionsBuilder WithSatisfyCondition<T>(bool p_value)
                 where T : BlackboardStateDefinition;
         }
-
-        public interface IPreconditionsBuilder : IEffectsBuilder
+        
+        public interface IActivationBuilder : ISatisfyConditionsBuilder
         {
-            IPreconditionsBuilder WithPrecondition(BlackboardStateDefinition p_stateDefinition, bool p_value);
-            IPreconditionsBuilder WithPrecondition<T>(bool p_value)
+            IActivationBuilder WithActivationCondition(BlackboardStateDefinition p_stateDefinition, bool p_value);
+            IActivationBuilder WithActivationCondition<T>(bool p_value)
                 where T : BlackboardStateDefinition;
         }
         
         public interface IInitialBuilder
         {
-            IPreconditionsBuilder WithName(string p_name);
+            IActivationBuilder WithName(string p_name);
         }
 
-        internal class Builder : IInitialBuilder, IPreconditionsBuilder, IEffectsBuilder, IPriorityBuilder, IBuildBuilder
+        internal class Builder : IInitialBuilder, ISatisfyConditionsBuilder, IActivationBuilder, IPriorityBuilder, IBuildBuilder
         {
             private readonly BlackboardStateFactory _stateFactory;
-            private readonly List<BlackboardStateValue> _preconditions = new(32);
-            private readonly List<BlackboardStateValue> _effects = new(32);
+            private readonly List<BlackboardStateValue> _satisfyConditions = new(32);
+            private readonly List<BlackboardStateValue> _activationConditions = new(32);
             private string _name;
             private float _priority;
 
@@ -49,40 +49,40 @@ namespace SpaceStation.AI.Goap
                 _stateFactory = p_stateFactory;
             }
 
-            public IPreconditionsBuilder WithName(string p_name)
+            public IActivationBuilder WithName(string p_name)
             {
                 _name = p_name;
                 return this;
             }
+
+            public IActivationBuilder WithActivationCondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
+            {
+                var definition = _stateFactory.Get(p_stateDefinition.GetType());
+                _activationConditions.Add(new BlackboardStateValue(definition, p_value));
+                
+                return this;
+            }
+
+            public IActivationBuilder WithActivationCondition<T>(bool p_value) where T : BlackboardStateDefinition
+            {
+                var definition = _stateFactory.Get<T>();
+                _activationConditions.Add(new BlackboardStateValue(definition, p_value));
+                
+                return this;
+            }
             
-            public IPreconditionsBuilder WithPrecondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
+            public ISatisfyConditionsBuilder WithSatisfyCondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
             {
                 var definition = _stateFactory.Get(p_stateDefinition.GetType());
-                _preconditions.Add(new BlackboardStateValue(definition, p_value));
+                _satisfyConditions.Add(new BlackboardStateValue(definition, p_value));
                 
                 return this;
             }
 
-            public IPreconditionsBuilder WithPrecondition<T>(bool p_value) where T : BlackboardStateDefinition
+            public ISatisfyConditionsBuilder WithSatisfyCondition<T>(bool p_value) where T : BlackboardStateDefinition
             {
                 var definition = _stateFactory.Get<T>();
-                _preconditions.Add(new BlackboardStateValue(definition, p_value));
-                
-                return this;
-            }
-
-            public IEffectsBuilder WithEffect(BlackboardStateDefinition p_stateDefinition, bool p_value)
-            {
-                var definition = _stateFactory.Get(p_stateDefinition.GetType());
-                _effects.Add(new BlackboardStateValue(definition, p_value));
-                
-                return this;
-            }
-
-            public IEffectsBuilder WithEffect<T>(bool p_value) where T : BlackboardStateDefinition
-            {
-                var definition = _stateFactory.Get<T>();
-                _effects.Add(new BlackboardStateValue(definition, p_value));
+                _satisfyConditions.Add(new BlackboardStateValue(definition, p_value));
                 
                 return this;
             }
@@ -95,7 +95,7 @@ namespace SpaceStation.AI.Goap
 
             public Goal Build()
             {
-                var actionInstance = new Goal(_name, _priority, _preconditions.ToArray(), _effects.ToArray());
+                var actionInstance = new Goal(_name, _priority, _satisfyConditions.ToArray(), _activationConditions.ToArray());
                 
                 OnBuild?.Invoke(actionInstance);
                 

@@ -8,6 +8,12 @@ namespace SpaceStation.AI.Goap
         internal BlackboardStateValue()
         { }
 
+        internal BlackboardStateValue(BlackboardStateValue p_other)
+        {
+            Definition = p_other.Definition;
+            Value = p_other.Value;
+        }
+
         internal BlackboardStateValue(BlackboardStateDefinition p_definition, bool p_value)
         {
             Definition = p_definition;

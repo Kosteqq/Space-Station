@@ -3,7 +3,16 @@ using System.Collections.Generic;
 
 namespace SpaceStation.AI.Goap
 {
-    public class Blackboard
+    public interface IBlackboardRO
+    {
+        Blackboard Clone();
+        bool Get<T>();
+        bool Get(Type p_stateType);
+        bool Get(BlackboardStateDefinition p_definition);
+        IReadOnlyDictionary<BlackboardStateDefinition, bool> GetAll();
+    }
+    
+    public class Blackboard : IBlackboardRO
     {
         private readonly BlackboardStateFactory _stateFactory;
         private readonly Dictionary<BlackboardStateDefinition, bool> _states = new(64);
@@ -13,36 +22,32 @@ namespace SpaceStation.AI.Goap
             _stateFactory = p_stateFactory;
         }
 
-        public void Set<T>()
+        public Blackboard Clone()
+        {
+            var clone = new Blackboard(_stateFactory);
+
+            foreach (var (definition, value) in _states)
+            {
+                clone._states[definition] = value;
+            }
+
+            return clone;
+        }
+
+        public void Set<T>(bool p_value)
             where T : BlackboardStateDefinition
         {
-            InternalSet(typeof(T), true);
+            InternalSet(typeof(T), p_value);
         }
 
-        public void Set(Type p_stateType)
+        public void Set(Type p_stateType, bool p_value)
         {
-            InternalSet(p_stateType, true);
+            InternalSet(p_stateType, p_value);
         }
 
-        public void Set(BlackboardStateDefinition p_definition)
+        public void Set(BlackboardStateDefinition p_definition, bool p_value)
         {
-            InternalSet(p_definition.GetType(), true);
-        }
-
-        public void Reset<T>()
-            where T : BlackboardStateDefinition
-        {
-            InternalSet(typeof(T), false);
-        }
-
-        public void Reset(Type p_stateType)
-        {
-            InternalSet(p_stateType, false);
-        }
-
-        public void Reset(BlackboardStateDefinition p_definition)
-        {
-            InternalSet(p_definition.GetType(), false);
+            InternalSet(p_definition.GetType(), p_value);
         }
 
         public bool Get<T>()

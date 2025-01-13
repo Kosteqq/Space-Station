@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SpaceStation.Core;
 
 namespace SpaceStation.AI.Goap
@@ -22,9 +23,19 @@ namespace SpaceStation.AI.Goap
             return _actionsController.CreateActionBuilder();
         }
 
+        public IReadOnlyList<Action> GetAllActions()
+        {
+            return _actionsController.GetAll();
+        }
+
         public GoalsController.IInitialBuilder BuildGoal()
         {
             return _goalsController.CreateActionBuilder();
+        }
+
+        public IReadOnlyList<Goal> GetAllGoals()
+        {
+            return _goalsController.GetAll();
         }
 
         private void OnDestroy()

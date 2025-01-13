@@ -19,5 +19,10 @@ namespace SpaceStation.AI.Goap
 
             return builder;
         }
+
+        public IReadOnlyList<Action> GetAll()
+        {
+            return _actions;
+        }
     }
 }

@@ -4,16 +4,16 @@ namespace SpaceStation.AI.Goap
     {
         public string Name { get; }
         public float Priority { get; }
-        public BlackboardStateValue[] Preconditions { get; }
-        public BlackboardStateValue[] Effects { get; }
+        public BlackboardStateValue[] ActivationConditions { get; }
+        public BlackboardStateValue[] SatisfyConditions { get; }
 
         internal Goal(string p_name, float p_priority,
-            BlackboardStateValue[] p_preconditions, BlackboardStateValue[] p_effects)
+            BlackboardStateValue[] p_satisfyConditions, BlackboardStateValue[] p_activationConditions)
         {
             Name = p_name;
             Priority = p_priority;
-            Preconditions = p_preconditions;
-            Effects = p_effects;
+            SatisfyConditions = p_satisfyConditions;
+            ActivationConditions = p_activationConditions;
         }
     }
 }
