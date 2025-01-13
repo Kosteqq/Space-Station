@@ -32,7 +32,7 @@ namespace SpaceStation.Gameplay.Character
             var task = ScriptableObject.CreateInstance<DefaultIdleTask>();
 
             task.Target = _idleTargets[Random.Range(0, _idleTargets.Length)];
-            task.OnReleased += () => Object.Destroy(task);
+            // task.OnReleased += () => Object.Destroy(task);
             
             return task;
         }
