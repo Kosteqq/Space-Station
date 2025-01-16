@@ -10,9 +10,11 @@ namespace SpaceStation.AI.Goap
             Action Build();
         }
 
-        public interface IRunBuilder
+        public interface IRunBuilder : IBuildBuilder
         {
-            IBuildBuilder WithRunCallback(Action.RunDelegate p_runDelegate);
+            IRunBuilder WithStartCallback(Action.ContextStatusDelegate p_startDelegate);
+            IRunBuilder WithStopCallback(Action.ContextDelegate p_stopDelegate);
+            IRunBuilder WithRunCallback(Action.ContextStatusDelegate p_runDelegate);
         }
 
         public interface IEffectsBuilder : IRunBuilder
@@ -40,7 +42,9 @@ namespace SpaceStation.AI.Goap
             private readonly List<BlackboardStateValue> _preconditions = new(32);
             private readonly List<BlackboardStateValue> _effects = new(32);
             private string _name;
-            private Action.RunDelegate _runDelegate;
+            private Action.ContextStatusDelegate _startDelegate;
+            private Action.ContextDelegate _stopDelegate;
+            private Action.ContextStatusDelegate _runDelegate;
 
             public event Action<Action> OnBuild;
 
@@ -86,16 +90,28 @@ namespace SpaceStation.AI.Goap
                 
                 return this;
             }
-
-            public IBuildBuilder WithRunCallback(Action.RunDelegate p_runDelegate)
+            public IRunBuilder WithStartCallback(Action.ContextStatusDelegate p_startDelegate)
             {
-                _runDelegate = p_runDelegate;
+                _startDelegate += p_startDelegate;
+                return this;
+            }
+                
+            public IRunBuilder WithStopCallback(Action.ContextDelegate p_stopDelegate)
+            {
+                _stopDelegate += p_stopDelegate;
+                return this;
+            }
+            
+            public IRunBuilder WithRunCallback(Action.ContextStatusDelegate p_runDelegate)
+            {
+                _runDelegate += p_runDelegate;
                 return this;
             }
 
             public Action Build()
             {
-                var actionInstance = new Action(_name, _preconditions.ToArray(), _effects.ToArray(), _runDelegate);
+                var actionInstance = new Action(_name, _preconditions.ToArray(), _effects.ToArray(),
+                    _startDelegate, _stopDelegate, _runDelegate);
                 
                 OnBuild?.Invoke(actionInstance);
                 

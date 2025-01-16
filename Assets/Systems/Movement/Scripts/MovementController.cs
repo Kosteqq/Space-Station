@@ -24,10 +24,14 @@ namespace SpaceStation.Movement
         private float _currentSpeed;
         
         private MovementTask _currentTask;
+        private MovementTask _prevTask;
         private Queue<Vector2> _path;
         private float _stopDistance;
 
         private Vector2? _targetPoint;
+
+        public MovementTask CurrentTask => _currentTask;
+        public MovementTask PrevTask => _prevTask;
 
         public override void StartGame()
         {
@@ -48,6 +52,12 @@ namespace SpaceStation.Movement
         {
             _path = new Queue<Vector2>(p_path);
             _stopDistance = p_stopDistance;
+
+            if (_currentTask != null)
+            {
+                _prevTask = _currentTask;
+                _currentTask.CurrentStatus.Value = MovementTask.Status.Failure;
+            }
             
             _currentTask = new MovementTask();
             _currentTask.CurrentStatus.Value = MovementTask.Status.Running;
@@ -73,6 +83,7 @@ namespace SpaceStation.Movement
                 if (!TryAcequireNextPoint())
                 {
                     _currentTask.CurrentStatus.Value = MovementTask.Status.Success;
+                    _prevTask = _currentTask;
                     _currentTask = null;
                     return;
                 }

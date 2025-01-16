@@ -35,7 +35,7 @@ namespace SpaceStation.AI.Goap
                 return null;
             }
 
-            Debug.Log(GetDebugHierarchy(roots, ""));
+            // Debug.Log(GetDebugHierarchy(roots, ""));
 
             var flattenHierarchy = new Queue<Action>(64);
             FlatNodesHierarchy(roots, flattenHierarchy);

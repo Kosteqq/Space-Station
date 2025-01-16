@@ -23,7 +23,7 @@ namespace SpaceStation.EnviroAsset
             _assets.Remove(p_asset);
         }
 
-        public TAsset GetUnusedAssts<TAsset>()
+        public TAsset GetUnusedAsset<TAsset>()
             where TAsset : EnviroAssetController
         {
             foreach (var asset in _assets)
@@ -36,6 +36,22 @@ namespace SpaceStation.EnviroAsset
             
             Debug.Log($"Failed to get any unused asset of type {typeof(TAsset).Name}");
             return null;
+        }
+
+        public List<TAsset> GetUnusedAssets<TAsset>()
+            where TAsset : EnviroAssetController
+        {
+            var output = new List<TAsset>();
+            
+            foreach (var asset in _assets)
+            {
+                if (!asset.InUse && asset is TAsset targetAsset)
+                {
+                    output.Add(targetAsset);
+                }
+            }
+            
+            return output;
         }
     }
 }

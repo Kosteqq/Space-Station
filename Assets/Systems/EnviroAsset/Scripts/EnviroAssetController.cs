@@ -8,6 +8,7 @@ namespace SpaceStation.EnviroAsset
     public abstract class EnviroAssetController : SystemController<EnviroAssetsManager>
     {
         public bool InUse { get; internal set; }
+        public PathFindingTarget PathFindingTarget => GetComponent<PathFindingTarget>();
 
         public override void InitializeGame()
         {
