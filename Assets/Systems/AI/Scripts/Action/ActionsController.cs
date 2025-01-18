@@ -4,17 +4,15 @@ namespace SpaceStation.AI.Goap
 {
     public partial class ActionsController
     {
-        private readonly BlackboardStateFactory _stateFactory;
         private readonly List<Action> _actions = new(64);
         
-        internal ActionsController(BlackboardStateFactory p_stateFactory)
+        internal ActionsController()
         {
-            _stateFactory = p_stateFactory;
         }
         
         public IInitialBuilder CreateActionBuilder()
         {
-            var builder = new Builder(_stateFactory);
+            var builder = new Builder();
             builder.OnBuild += _actions.Add;
 
             return builder;

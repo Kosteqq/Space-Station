@@ -19,14 +19,14 @@ namespace SpaceStation.AI.Goap
 
         public interface IEffectsBuilder : IRunBuilder
         {
-            IEffectsBuilder WithEffect(BlackboardStateDefinition p_stateDefinition, bool p_value);
+            IEffectsBuilder WithEffect(BlackboardState p_state, bool p_value);
             IEffectsBuilder WithEffect<T>(bool p_value)
                 where T : BlackboardStateDefinition;
         }
 
         public interface IPreconditionsBuilder : IEffectsBuilder
         {
-            IPreconditionsBuilder WithPrecondition(BlackboardStateDefinition p_stateDefinition, bool p_value);
+            IPreconditionsBuilder WithPrecondition(BlackboardState p_state, bool p_value);
             IPreconditionsBuilder WithPrecondition<T>(bool p_value)
                 where T : BlackboardStateDefinition;
         }
@@ -38,7 +38,6 @@ namespace SpaceStation.AI.Goap
 
         internal class Builder : IInitialBuilder, IPreconditionsBuilder, IEffectsBuilder, IRunBuilder, IBuildBuilder
         {
-            private readonly BlackboardStateFactory _stateFactory;
             private readonly List<BlackboardStateValue> _preconditions = new(32);
             private readonly List<BlackboardStateValue> _effects = new(32);
             private string _name;
@@ -48,9 +47,8 @@ namespace SpaceStation.AI.Goap
 
             public event Action<Action> OnBuild;
 
-            public Builder(BlackboardStateFactory p_stateFactory)
+            public Builder()
             {
-                _stateFactory = p_stateFactory;
             }
 
             public IPreconditionsBuilder WithName(string p_name)
@@ -59,34 +57,27 @@ namespace SpaceStation.AI.Goap
                 return this;
             }
             
-            public IPreconditionsBuilder WithPrecondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
+            public IPreconditionsBuilder WithPrecondition(BlackboardState p_state, bool p_value)
             {
-                var definition = _stateFactory.Get(p_stateDefinition.GetType());
-                _preconditions.Add(new BlackboardStateValue(definition, p_value));
-                
+                _preconditions.Add(BlackboardStateValue.Create(p_state, p_value));
                 return this;
             }
 
             public IPreconditionsBuilder WithPrecondition<T>(bool p_value) where T : BlackboardStateDefinition
             {
-                var definition = _stateFactory.Get<T>();
-                _preconditions.Add(new BlackboardStateValue(definition, p_value));
-                
+                _preconditions.Add(BlackboardStateValue.Create<T>(p_value));
                 return this;
             }
 
-            public IEffectsBuilder WithEffect(BlackboardStateDefinition p_stateDefinition, bool p_value)
+            public IEffectsBuilder WithEffect(BlackboardState p_state, bool p_value)
             {
-                var definition = _stateFactory.Get(p_stateDefinition.GetType());
-                _effects.Add(new BlackboardStateValue(definition, p_value));
-                
+                _effects.Add(BlackboardStateValue.Create(p_state, p_value));
                 return this;
             }
 
             public IEffectsBuilder WithEffect<T>(bool p_value) where T : BlackboardStateDefinition
             {
-                var definition = _stateFactory.Get<T>();
-                _effects.Add(new BlackboardStateValue(definition, p_value));
+                _effects.Add(BlackboardStateValue.Create<T>(p_value));
                 
                 return this;
             }

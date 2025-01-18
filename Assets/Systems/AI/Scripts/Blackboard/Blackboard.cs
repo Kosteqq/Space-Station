@@ -6,26 +6,23 @@ namespace SpaceStation.AI.Goap
     public interface IBlackboardRO
     {
         Blackboard Clone();
-        bool Get<T>();
-        bool Get(Type p_stateType);
-        bool Get(BlackboardStateDefinition p_definition);
-        IReadOnlyDictionary<BlackboardStateDefinition, bool> GetAll();
+        bool Get<T>() where T : BlackboardStateDefinition;
+        bool Get(BlackboardState p_state);
+        IReadOnlyDictionary<BlackboardState, bool> GetAll();
         bool CheckValue(BlackboardStateValue p_stateValue);
     }
     
     public class Blackboard : IBlackboardRO
     {
-        private readonly BlackboardStateFactory _stateFactory;
-        private readonly Dictionary<BlackboardStateDefinition, bool> _states = new(64);
+        private readonly Dictionary<BlackboardState, bool> _states = new(64);
 
-        internal Blackboard(BlackboardStateFactory p_stateFactory)
+        internal Blackboard()
         {
-            _stateFactory = p_stateFactory;
         }
 
         public Blackboard Clone()
         {
-            var clone = new Blackboard(_stateFactory);
+            var clone = new Blackboard();
 
             foreach (var (definition, value) in _states)
             {
@@ -43,74 +40,45 @@ namespace SpaceStation.AI.Goap
             }
         }
 
-        public void Set<T>(bool p_value)
-            where T : BlackboardStateDefinition
+        public void Set<TDefinition>(bool p_value)
+            where TDefinition : BlackboardStateDefinition
         {
-            InternalSet(typeof(T), p_value);
+            Set(BlackboardState.Create<TDefinition>(), p_value);
         }
 
-        public void Set(Type p_stateType, bool p_value)
+        public void Set(BlackboardState p_state, bool p_value)
         {
-            InternalSet(p_stateType, p_value);
+            if (!_states.ContainsKey(p_state))
+                _states.Add(p_state, false);
+
+            _states[p_state] = p_value;
         }
 
-        public void Set(BlackboardStateDefinition p_definition, bool p_value)
+        public bool Get<TDefinition>()
+            where TDefinition : BlackboardStateDefinition
         {
-            InternalSet(p_definition.GetType(), p_value);
+            return Get(BlackboardState.Create<TDefinition>());
         }
 
-        public bool Get<T>()
+        public bool Get(BlackboardState p_state)
         {
-            return InternalGet(typeof(T));
+            if (!_states.TryGetValue(p_state, out var value))
+            {
+                _states.Add(p_state, false);
+                value = false;
+            }
+
+            return value;
         }
 
-        public bool Get(Type p_stateType)
-        {
-            return InternalGet(p_stateType);
-        }
-
-        public bool Get(BlackboardStateDefinition p_definition)
-        {
-            return InternalGet(p_definition.GetType());
-        }
-
-        public IReadOnlyDictionary<BlackboardStateDefinition, bool> GetAll()
+        public IReadOnlyDictionary<BlackboardState, bool> GetAll()
         {
             return _states;
         }
 
         public bool CheckValue(BlackboardStateValue p_stateValue)
         {
-            return Get(p_stateValue.Definition) == p_stateValue.Value;
-        }
-
-        private void InternalSet(Type p_stateType, bool p_value)
-        {
-            var definition = _stateFactory.Get(p_stateType);
-
-            if (definition == null)
-                return;
-
-            if (!_states.ContainsKey(definition))
-                _states.Add(definition, false);
-
-            _states[definition] = p_value;
-        }
-
-        private bool InternalGet(Type p_stateType)
-        {
-            var definition = _stateFactory.Get(p_stateType);
-
-            if (definition == null)
-                return false;
-
-            if (!_states.TryGetValue(definition, out var value))
-            {
-                _states.Add(definition, false);
-                value = false;
-            }
-
-            return value;
+            return Get(p_stateValue.State) == p_stateValue.Value;
         }
 
         // Set On/Off

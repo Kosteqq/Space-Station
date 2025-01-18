@@ -21,8 +21,8 @@ namespace SpaceStation.AI.Goap
 
             foreach (var condition in p_goal.SatisfyConditions)
             {
-                if (p_controller.Blackboard.Get(condition.Definition) != condition.Value)
-                    goalConditions.Add(new BlackboardStateValue(condition));
+                if (p_controller.Blackboard.Get(condition.State) != condition.Value)
+                    goalConditions.Add(condition.Clone());
             }
 
             var roots = FindChildSubActions(p_controller.Blackboard, goalConditions);
@@ -31,11 +31,11 @@ namespace SpaceStation.AI.Goap
             {
                 Debug.LogError(
                     $"Failed to satisfy goal \"{p_goal.Name}\" " +
-                    $"conditions: {string.Join(", ", goalConditions.Select(condition => condition.Definition.Name))}!");
+                    $"conditions: {string.Join(", ", goalConditions.Select(condition => condition.State.Name))}!");
                 return null;
             }
 
-            // Debug.Log(GetDebugHierarchy(roots, ""));
+            Debug.Log(GetDebugHierarchy(roots, ""));
 
             var flattenHierarchy = new Queue<Action>(64);
             FlatNodesHierarchy(roots, flattenHierarchy);
@@ -134,7 +134,7 @@ namespace SpaceStation.AI.Goap
 
                 foreach (var effect in action.Effects)
                 {
-                    blackboard.Set(effect.Definition, effect.Value);
+                    blackboard.Set(effect.State, effect.Value);
                 }
 
                 return new Node

@@ -1,9 +1,20 @@
-using UnityEngine;
+using System;
 
 namespace SpaceStation.AI.Goap
 {
-    public abstract class BlackboardStateDefinition : ScriptableObject
+    public class CustomStateNameAttribute : Attribute
     {
-        public abstract string Name { get; }
+        public string Name { get; }
+        
+        public CustomStateNameAttribute(string p_name)
+        {
+            Name = p_name;
+        }
+    }
+    
+    public abstract class BlackboardStateDefinition
+    {
+        protected BlackboardStateDefinition()
+        { }
     }
 }

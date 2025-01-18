@@ -16,7 +16,7 @@ namespace SpaceStation.AI.Goap
         public override void InitializeGame()
         {
             base.InitializeGame();
-            _blackboard = new Blackboard(SystemManager.StateFactory);
+            _blackboard = new Blackboard();
         }
 
         private Action _prevAction;

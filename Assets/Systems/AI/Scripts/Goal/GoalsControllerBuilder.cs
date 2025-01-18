@@ -17,16 +17,16 @@ namespace SpaceStation.AI.Goap
 
         public interface ISatisfyConditionsBuilder : IPriorityBuilder
         {
-            ISatisfyConditionsBuilder WithSatisfyCondition(BlackboardStateDefinition p_stateDefinition, bool p_value);
-            ISatisfyConditionsBuilder WithSatisfyCondition<T>(bool p_value)
-                where T : BlackboardStateDefinition;
+            ISatisfyConditionsBuilder WithSatisfyCondition(BlackboardState p_state, bool p_value);
+            ISatisfyConditionsBuilder WithSatisfyCondition<TDefinition>(bool p_value)
+                where TDefinition : BlackboardStateDefinition;
         }
         
         public interface IActivationBuilder : ISatisfyConditionsBuilder
         {
-            IActivationBuilder WithActivationCondition(BlackboardStateDefinition p_stateDefinition, bool p_value);
-            IActivationBuilder WithActivationCondition<T>(bool p_value)
-                where T : BlackboardStateDefinition;
+            IActivationBuilder WithActivationCondition(BlackboardState p_state, bool p_value);
+            IActivationBuilder WithActivationCondition<TDefinition>(bool p_value)
+                where TDefinition : BlackboardStateDefinition;
         }
         
         public interface IInitialBuilder
@@ -36,7 +36,6 @@ namespace SpaceStation.AI.Goap
 
         internal class Builder : IInitialBuilder, ISatisfyConditionsBuilder, IActivationBuilder, IPriorityBuilder, IBuildBuilder
         {
-            private readonly BlackboardStateFactory _stateFactory;
             private readonly List<BlackboardStateValue> _satisfyConditions = new(32);
             private readonly List<BlackboardStateValue> _activationConditions = new(32);
             private string _name;
@@ -44,45 +43,38 @@ namespace SpaceStation.AI.Goap
 
             public event Action<Goal> OnBuild;
 
-            public Builder(BlackboardStateFactory p_stateFactory)
-            {
-                _stateFactory = p_stateFactory;
-            }
-
             public IActivationBuilder WithName(string p_name)
             {
                 _name = p_name;
                 return this;
             }
 
-            public IActivationBuilder WithActivationCondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
+            public IActivationBuilder WithActivationCondition(BlackboardState p_state, bool p_value)
             {
-                var definition = _stateFactory.Get(p_stateDefinition.GetType());
-                _activationConditions.Add(new BlackboardStateValue(definition, p_value));
+                _activationConditions.Add(BlackboardStateValue.Create(p_state, p_value));
                 
                 return this;
             }
 
-            public IActivationBuilder WithActivationCondition<T>(bool p_value) where T : BlackboardStateDefinition
+            public IActivationBuilder WithActivationCondition<TDefinition>(bool p_value)
+                where TDefinition : BlackboardStateDefinition
             {
-                var definition = _stateFactory.Get<T>();
-                _activationConditions.Add(new BlackboardStateValue(definition, p_value));
+                _activationConditions.Add(BlackboardStateValue.Create<TDefinition>(p_value));
                 
                 return this;
             }
             
-            public ISatisfyConditionsBuilder WithSatisfyCondition(BlackboardStateDefinition p_stateDefinition, bool p_value)
+            public ISatisfyConditionsBuilder WithSatisfyCondition(BlackboardState p_state, bool p_value)
             {
-                var definition = _stateFactory.Get(p_stateDefinition.GetType());
-                _satisfyConditions.Add(new BlackboardStateValue(definition, p_value));
+                _satisfyConditions.Add(BlackboardStateValue.Create(p_state, p_value));
                 
                 return this;
             }
 
-            public ISatisfyConditionsBuilder WithSatisfyCondition<T>(bool p_value) where T : BlackboardStateDefinition
+            public ISatisfyConditionsBuilder WithSatisfyCondition<TDefinition>(bool p_value) 
+                where TDefinition : BlackboardStateDefinition
             {
-                var definition = _stateFactory.Get<T>();
-                _satisfyConditions.Add(new BlackboardStateValue(definition, p_value));
+                _satisfyConditions.Add(BlackboardStateValue.Create<TDefinition>(p_value));
                 
                 return this;
             }
