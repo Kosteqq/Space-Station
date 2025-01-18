@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SpaceStation.Core;
 using SpaceStation.Utils;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace SpaceStation.AI.Goap
         private Plan _plan;
 
         public Blackboard Blackboard => _blackboard;
+        public Plan Plan => _plan;
 
         public override void InitializeGame()
         {
@@ -60,7 +62,27 @@ namespace SpaceStation.AI.Goap
 
         public Plan CreatePlan()
         {
-            return SystemManager.Planner.CreatePlan(this, SystemManager.GetAllGoals()[0]);
+            Goal targetGoal = null;
+
+            foreach (var goal in SystemManager.GetAllGoals())
+            {
+                if (goal.ActivationConditions.Any(condition => !_blackboard.CheckValue(condition)))
+                {
+                    continue;
+                }
+
+                if (targetGoal == null || targetGoal.Priority < goal.Priority)
+                {
+                    targetGoal = goal;
+                }
+            }
+
+            if (targetGoal == null)
+            {
+                return null;
+            }
+            
+            return SystemManager.Planner.CreatePlan(this, targetGoal);
         }
     }
 

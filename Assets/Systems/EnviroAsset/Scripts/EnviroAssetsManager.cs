@@ -23,6 +23,20 @@ namespace SpaceStation.EnviroAsset
             _assets.Remove(p_asset);
         }
 
+        public bool IsAnyAssetAvaiable<TAsset>()
+            where TAsset : EnviroAssetController
+        {
+            foreach (var asset in _assets)
+            {
+                if (!asset.InUse && asset is TAsset targetAsset)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         public TAsset GetUnusedAsset<TAsset>()
             where TAsset : EnviroAssetController
         {

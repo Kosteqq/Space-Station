@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SpaceStation.AI;
 using SpaceStation.AI.Goap;
 using SpaceStation.Core;
@@ -11,34 +12,25 @@ using Action = SpaceStation.AI.Goap.Action;
 
 namespace SpaceStation.Gameplay.Character
 {
+    [CustomStateName("Is_Critical_Hungry")]
     public sealed class IsCriticalHungryStateDefinition : BlackboardStateDefinition
     {
-        public override string Name => "Is_Critical_Hungry";
     }
-    
-    public sealed class HasTableStateDefinition : BlackboardStateDefinition
+
+    public class Sensor
     {
-        public override string Name => "Has_Table";
-    }
-    
-    public sealed class IsByTableTargetStateDefinition : BlackboardStateDefinition
-    {
-        public override string Name => "Is_By_Table";
-    }
-    
-    public sealed class HasOwnFoodStateDefinition : BlackboardStateDefinition
-    {
-        public override string Name => "Has_Own_Food";
-    }
-    
-    public sealed class HasFoodInHandStateDefinition : BlackboardStateDefinition
-    {
-        public override string Name => "Has_Food_In_Hand";
-    }
-    
-    public sealed class IsByFoodTargetStateDefinition : BlackboardStateDefinition
-    {
-        public override string Name => "Is_By_Food_Target";
+        private Action<bool> _setAction; 
+        private Func<bool> _getAction;
+        public Sensor(Action<bool> p_setAction, Func<bool> p_getAction)
+        {
+            _setAction = p_setAction;
+            _getAction = p_getAction;
+        }
+
+        public void Update()
+        {
+            _setAction(_getAction());
+        }
     }
 
     [RequireComponent(typeof(MovementController))]
@@ -57,6 +49,8 @@ namespace SpaceStation.Gameplay.Character
         private PathFindingManager _pathFindingManager; // TEMP
 
         public ObservableProperty<float> Hungry;
+
+        private List<Sensor> _sensors = new();
 
         public override void InitializeGame()
         {
@@ -82,64 +76,14 @@ namespace SpaceStation.Gameplay.Character
         public override void StartGame()
         {
             base.StartGame();
-
-            _aiController.SystemManager
-                .BuildAction()
-                .WithName("Fast Eat")
-                .WithPrecondition<HasFoodInHandStateDefinition>(true)
-                .WithPrecondition<IsByTableTargetStateDefinition>(true)
-                .WithEffect<IsCriticalHungryStateDefinition>(false)
-                .WithStartCallback(Eat)
-                .Build();
-
-            _aiController.SystemManager
-                .BuildAction()
-                .WithName("Go to table")
-                .WithPrecondition<HasTableStateDefinition>(true)
-                .WithPrecondition<IsByTableTargetStateDefinition>(false)
-                .WithEffect<IsByTableTargetStateDefinition>(true)
-                .WithEffect<IsByFoodTargetStateDefinition>(false)
-                .WithStartCallback(StartGoToAsset<EatPlaceEnviroAsset>)
-                .WithRunCallback(UpdateGoToAsset<EatPlaceEnviroAsset>)
-                .Build();
-
-            _aiController.SystemManager
-                .BuildAction()
-                .WithName("Find Table")
-                .WithEffect<HasTableStateDefinition>(true)
-                .WithStartCallback(FindAsset<EatPlaceEnviroAsset>)
-                .Build();
-
-            _aiController.SystemManager
-                .BuildAction()
-                .WithName("Find food")
-                // .WithPrecondition<HasOwnFoodStateDefinition>(false)
-                .WithEffect<HasOwnFoodStateDefinition>(true)
-                .WithStartCallback(FindAsset<FoodEnviroAsset>)
-                .Build();
-
-            _aiController.SystemManager
-                .BuildAction()
-                .WithName("Go to food")
-                .WithPrecondition<HasOwnFoodStateDefinition>(true)
-                .WithPrecondition<IsByFoodTargetStateDefinition>(false)
-                .WithEffect<IsByTableTargetStateDefinition>(false)
-                .WithEffect<IsByFoodTargetStateDefinition>(true)
-                .WithStartCallback(StartGoToAsset<FoodEnviroAsset>)
-                .WithRunCallback(UpdateGoToAsset<FoodEnviroAsset>)
-                .Build();
-
-            _aiController.SystemManager
-                .BuildAction()
-                .WithName("Take Food")
-                .WithPrecondition<HasOwnFoodStateDefinition>(true)
-                .WithPrecondition<IsByFoodTargetStateDefinition>(true)
-                .WithEffect<HasFoodInHandStateDefinition>(true)
-                .WithRunCallback(TakeFood)
-                .Build();
+            
+            EvnrioActions<FoodEnviroAsset>.Register(_aiController.SystemManager, false);
+            EvnrioActions<EatPlaceEnviroAsset>.Register(_aiController.SystemManager, true);
 
             _aiController.SystemManager.BuildGoal()
                 .WithName("Eat critical")
+                .WithActivationCondition<EvnrioActions<EatPlaceEnviroAsset>.IsAnyAvailableAssetState>(true)
+                .WithActivationCondition<EvnrioActions<FoodEnviroAsset>.IsAnyAvailableAssetState>(true)
                 .WithActivationCondition<IsCriticalHungryStateDefinition>(true)
                 .WithSatisfyCondition<IsCriticalHungryStateDefinition>(false)
                 .WithPriority(10)
@@ -149,118 +93,54 @@ namespace SpaceStation.Gameplay.Character
                 .WithName("Idle")
                 .WithPriority(-10)
                 .Build();
+
+            _sensors.Add(
+                new Sensor(
+                    _aiController.Blackboard.Set<EvnrioActions<FoodEnviroAsset>.IsByOwnEnviroAssetState>,
+                    () =>
+                    {
+                        if (!_enviroAssetUserController.IsOwningAsset<FoodEnviroAsset>())
+                            return false;
+
+                        return Vector3.Distance(_enviroAssetUserController.GetOwninggAsset<FoodEnviroAsset>().transform.position, transform.position) < 0.5f;
+                    }));
+            
+            _sensors.Add(
+                new Sensor(
+                    _aiController.Blackboard.Set<EvnrioActions<FoodEnviroAsset>.IsAnyAvailableAssetState>,
+                    _enviroAssetUserController.SystemManager.IsAnyAssetAvaiable<FoodEnviroAsset>));
+            
+            _sensors.Add(
+                new Sensor(
+                    _aiController.Blackboard.Set<EvnrioActions<FoodEnviroAsset>.IsOwningAssetState>,
+                    _enviroAssetUserController.IsOwningAsset<FoodEnviroAsset>));
+            
+            _sensors.Add(
+                new Sensor(
+                    _aiController.Blackboard.Set<EvnrioActions<EatPlaceEnviroAsset>.IsByOwnEnviroAssetState>,
+                    () =>
+                    {
+                        if (!_enviroAssetUserController.IsOwningAsset<EatPlaceEnviroAsset>())
+                            return false;
+
+                        return Vector3.Distance(_enviroAssetUserController.GetOwninggAsset<EatPlaceEnviroAsset>().transform.position, transform.position) < 0.5f;
+                    }));
+            
+            _sensors.Add(
+                new Sensor(
+                    _aiController.Blackboard.Set<EvnrioActions<EatPlaceEnviroAsset>.IsAnyAvailableAssetState>,
+                    _enviroAssetUserController.SystemManager.IsAnyAssetAvaiable<EatPlaceEnviroAsset>));
+            
+            _sensors.Add(
+                new Sensor(
+                    _aiController.Blackboard.Set<EvnrioActions<EatPlaceEnviroAsset>.IsOwningAssetState>,
+                    _enviroAssetUserController.IsOwningAsset<EatPlaceEnviroAsset>));
             
             _aiController.Blackboard.Set<IsCriticalHungryStateDefinition>(true);
             _aiController.CreatePlan();
         }
 
-        private static Action.Status FindAsset<TAsset>(in Action.Context p_context)
-            where TAsset : EnviroAssetController
-        {
-            if (!p_context.Object.TryGetComponent<EnviroAssetUserController>(out var assetUser))
-                return Action.Status.Failure;
-            
-            if (!assetUser.TryUseAsset<TAsset>())
-                return Action.Status.Failure;
-            
-            if (!p_context.Object.TryGetComponent<AiController>(out var aiController))
-                return Action.Status.Failure;
-            
-            
-            if (typeof(TAsset) == typeof(EatPlaceEnviroAsset))
-                aiController.Blackboard.Set<HasTableStateDefinition>(true);
-            if (typeof(TAsset) == typeof(FoodEnviroAsset))
-                aiController.Blackboard.Set<HasOwnFoodStateDefinition>(true);
-            
-            return Action.Status.Success;
-        }
-
-        private Action.Status StartGoToAsset<TAsset>(in Action.Context p_context)
-            where TAsset : EnviroAssetController
-        {
-            if (!p_context.Object.TryGetComponent<EnviroAssetUserController>(out var assetUser))
-                return Action.Status.Failure;
-            
-            if (!p_context.Object.TryGetComponent<GameplayCharacterController>(out var gameplayCharacter))
-                return Action.Status.Failure;
-            
-            if (!p_context.Object.TryGetComponent<AiController>(out var aiController))
-                return Action.Status.Failure;
-
-            var foodAsset = assetUser.GetUsingAsset<TAsset>();
-            if (foodAsset == null)
-                return Action.Status.Failure;
-
-            var movementTask = gameplayCharacter.MoveTo(foodAsset.PathFindingTarget);
-
-            switch (movementTask.CurrentStatus.Value)
-            {
-                case MovementTask.Status.Running:
-                    return Action.Status.Running;
-                case MovementTask.Status.Success:
-                    if (typeof(TAsset) == typeof(EatPlaceEnviroAsset))
-                        aiController.Blackboard.Set<IsByTableTargetStateDefinition>(true);
-                    if (typeof(TAsset) == typeof(FoodEnviroAsset))
-                        aiController.Blackboard.Set<IsByFoodTargetStateDefinition>(true);
-                    return Action.Status.Success;
-                case MovementTask.Status.Undefined:
-                case MovementTask.Status.Failure:
-                default:
-                    return Action.Status.Failure;
-            }
-        }
-
-        private Action.Status UpdateGoToAsset<TAsset>(in Action.Context p_context)
-            where TAsset : EnviroAssetController
-        {
-            if (!p_context.Object.TryGetComponent<MovementController>(out var movementController))
-                return Action.Status.Failure;
-            
-            if (!p_context.Object.TryGetComponent<AiController>(out var aiController))
-                return Action.Status.Failure;
-
-            var movementTask = movementController.CurrentTask;
-            movementTask ??= movementController.PrevTask;
-
-
-            switch (movementTask.CurrentStatus.Value)
-            {
-                case MovementTask.Status.Running:
-                    return Action.Status.Running;
-                case MovementTask.Status.Success:
-                    if (typeof(TAsset) == typeof(EatPlaceEnviroAsset))
-                        aiController.Blackboard.Set<IsByTableTargetStateDefinition>(true);
-                    if (typeof(TAsset) == typeof(FoodEnviroAsset))
-                        aiController.Blackboard.Set<IsByFoodTargetStateDefinition>(true);
-                    return Action.Status.Success;
-                case MovementTask.Status.Undefined:
-                case MovementTask.Status.Failure:
-                default:
-                    return Action.Status.Failure;
-            }
-        }
-
-        private Action.Status TakeFood(in Action.Context p_context)
-        {
-            if (!p_context.Object.TryGetComponent<EnviroAssetUserController>(out var assetUser))
-                return Action.Status.Failure;
-
-            var foodAsset = assetUser.GetUsingAsset<FoodEnviroAsset>();
-            
-            if (foodAsset == null)
-                return Action.Status.Failure;
-            
-            if (!p_context.Object.TryGetComponent<AiController>(out var aiController))
-                return Action.Status.Failure;
-
-            aiController.Blackboard.Set<HasFoodInHandStateDefinition>(true);
-            
-            foodAsset.transform.SetParent(gameObject.transform);
-            foodAsset.transform.localPosition = Vector3.zero;
-            return Action.Status.Success;
-        }
-
-        private Action.Status Eat(in Action.Context p_context)
+        private Action.Status UseStation(in Action.Context p_context)
         {
             if (!p_context.Object.TryGetComponent<EnviroAssetUserController>(out var assetUser))
                 return Action.Status.Failure;
@@ -271,23 +151,27 @@ namespace SpaceStation.Gameplay.Character
             if (!p_context.Object.TryGetComponent<AiController>(out var aiController))
                 return Action.Status.Failure;
             
-            aiController.Blackboard.Set<HasFoodInHandStateDefinition>(false);
-            aiController.Blackboard.Set<IsByTableTargetStateDefinition>(false);
-            aiController.Blackboard.Set<IsByFoodTargetStateDefinition>(false);
-            aiController.Blackboard.Set<HasOwnFoodStateDefinition>(false);
-            aiController.Blackboard.Set<HasTableStateDefinition>(false);
+            // aiController.Blackboard.Set<HasFoodInHandStateDefinition>(false);
+            // aiController.Blackboard.Set<IsByTableTargetStateDefinition>(false);
+            // aiController.Blackboard.Set<IsByFoodTargetStateDefinition>(false);
+            // aiController.Blackboard.Set<HasOwnFoodStateDefinition>(false);
+            // aiController.Blackboard.Set<HasTableStateDefinition>(false);
 
-            var food = assetUser.GetUsingAsset<FoodEnviroAsset>();
-            assetUser.RemoveUsage(food);
+            var food = assetUser.GetOwninggAsset<FoodEnviroAsset>();
+            assetUser.RemoveOwn(food);
             Destroy(food);
  
-            assetUser.RemoveAllUsage();
+            assetUser.RemoveAllOwnings();
             gameplayCharacter.Hungry.Value -= 20;
             return Action.Status.Success;
         }
 
         private void Update()
         {
+            foreach (var sensor in _sensors)
+            {
+                sensor.Update();
+            }
             Hungry.Value += 10 * Time.deltaTime;
         }
 
