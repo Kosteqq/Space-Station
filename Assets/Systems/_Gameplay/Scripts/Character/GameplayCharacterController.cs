@@ -35,14 +35,12 @@ namespace SpaceStation.Gameplay.Character
 
     [RequireComponent(typeof(MovementController))]
     [RequireComponent(typeof(PathFindingObjectController))]
-    [RequireComponent(typeof(TaskController))]
     [RequireComponent(typeof(EnviroAssetUserController))]
     [RequireComponent(typeof(AiController))]
     public class GameplayCharacterController : SystemController<GameplayCharactersManager>
     {
         private MovementController _movementController;
         private PathFindingObjectController _pathFindingObjectController;
-        private TaskController _taskController;
         private EnviroAssetUserController _enviroAssetUserController;
         private AiController _aiController;
 
@@ -58,14 +56,11 @@ namespace SpaceStation.Gameplay.Character
             
             _movementController = GetComponent<MovementController>();
             _pathFindingObjectController = GetComponent<PathFindingObjectController>();
-            _taskController = GetComponent<TaskController>();
             _enviroAssetUserController = GetComponent<EnviroAssetUserController>();
             _aiController = GetComponent<AiController>();
             
             _pathFindingManager = GameManager.GetSystem<PathFindingManager>();
             
-            _taskController.SetDefaultDispatcher(SystemManager.DefaultAiTaskDispatcher);
-
             Hungry = new();
             Hungry.OnValueChange += value =>
             {
